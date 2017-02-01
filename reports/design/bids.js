@@ -1,6 +1,33 @@
 function(doc) {
 
+    
+    // tender checks
     if (doc.doc_type !== "Tender") {return;}
+    var startDate = (doc.enquiryPeriod||{}).startDate;
+    if (!startDate) {
+        startDate = find_first_revision_date(doc);
+    }
+
+    if (doc.procurementMethod !== "open") {return;}
+    if ((doc.mode || "") === "test") { return;}
+
+    var bids_disclojure_date = (doc.qualificationPeriod || {}).startDate || (doc.awardPeriod || {}).startDate || null;
+    if(!bids_disclojure_date) { return; }
+
+    // payments should be calculated only from first stage of CD and only once
+    if (['competitiveDialogueEU.stage2', 'competitiveDialogueUA.stage2'].indexOf(doc.procurementMethodType) !== -1) {
+        log('Skipping tender stage2 ' + doc._id)
+        return;
+    }
+
+    var id = doc._id;
+    var tender_start_date = doc.tenderPeriod.startDate;
+    var tenderID = doc.tenderID;
+    var is_multilot = ("lots" in doc)?true:false;
+    var type = doc.procurementMethodType;
+
+
+
     function get_eu_tender_bids(tender) {
         var qualified_bids = (tender.qualifications || []).map(function(qualification) {
             return qualification.bidID;
@@ -24,58 +51,9 @@ function(doc) {
         }
         return doc.revisions[0].date || '';
     }
-
-    var startDate = (doc.enquiryPeriod||{}).startDate;
-    if (!startDate) {
-        startDate = find_first_revision_date(doc);
-    }
-
-    if (doc.procurementMethod !== "open") {return;}
-    if ((doc.mode || "") === "test") { return;}
-
-    var bids_disclojure_date = (doc.qualificationPeriod || {}).startDate || (doc.awardPeriod || {}).startDate || null;
-    if(!bids_disclojure_date) { return; }
-
-    // payments should be calculated only from first stage of CD and only once
-    if (['competitiveDialogueEU.stage2', 'competitiveDialogueUA.stage2'].indexOf(doc.procurementMethodType) !== -1) {
-        log('Skipping tender stage2 ' + doc._id)
-        return;
-    }
-
-    var id = doc._id;
-    var tender_start_date = doc.tenderPeriod.startDate;
-    var tenderID = doc.tenderID;
-    var is_multilot = ( "lots" in doc )?true:false;
-    var type = doc.procurementMethodType;
-
-    function max_date(obj) {
-        //helper function to find max date in object
-        var dates = [];
-
-        ['date', 'dateSigned', 'documents'].forEach(function(field){
-            var date = obj[field] || '';
-            if (date) {
-                if (typeof date === "object") {
-                    date.forEach(function(d) {
-                        dates.push(new Date(d.datePublished));
-                    });
-                } else {
-                    dates.push(new Date(date));
-                }
-            }
-        });
-        return new Date(Math.max.apply(null, dates));
-    };
-
     function date_normalize(date) {
         //return date in UTC format
-        var ddate = '';
-        if (typeof date !== 'object') {
-            ddate = new Date(date);
-        } else {
-            ddate = date;
-        }
-        return ddate.toISOString().slice(0, 23);
+        return  ((typeof date !== 'object')?(new Date(date)):date).toISOString().slice(0, 23);
     };
 
     function find_bid_by_lot(id) {
@@ -196,32 +174,8 @@ function(doc) {
     function check_tender(tender) {
         switch(tender.status) {
         case "cancelled":
-            if ('date' in tender) {
-                if ((new Date(tender.date)) < (new Date(bids_disclojure_date))) {
-                    return false;
-                }
-
-            } else {
-                var tender_cancellations = ( tender.cancellations || [] ).filter(function(cancellation) {
-                    return (cancellation.status === 'active') && (cancellation.cancellationOf === 'tender');
-                });
-                if (tender_cancellations.length === 0) {
-                    return false;
-                }
-                if (tender_cancellations.length > 1) {
-                    cancel = tender_cancellations.reduce(function(prev_doc, curr_doc) {
-                        return (max_date( prev_doc ) > max_date( curr_doc ))? curr_doc : prev_doc;
-                    });
-
-                    if (max_date( cancel ) < (new Date( bids_disclojure_date ))) {
-                        return false;
-                    }
-                } else {
-                    if (max_date( tender_cancellations[0] ) < (new Date( bids_disclojure_date ))) {
-                        return false;
-                    }
-                }
-
+            if ((new Date(tender.date)) < (new Date(bids_disclojure_date))) {
+                return false;
             }
             if (! check_tender_bids(tender)) {
                 return false;
@@ -240,33 +194,9 @@ function(doc) {
     function check_lot(tender, lot){
         switch (lot.status) {
         case "cancelled":
-            if ('date' in lot) {
                 if ((new Date(lot.date)) < (new Date(bids_disclojure_date))) {
                     return false;
                 }
-            } else {
-                lot_cancellation = (tender.cancellations || []).filter(function(cancellation) {
-                    if ((cancellation.status === 'active') && (cancellation.cancellationOf === 'lot') && (cancellation.relatedLot === lot.id)) {
-                        return true;
-                    }
-                });
-                if (lot_cancellation.length > 0) {
-                    if (lot_cancellation.length > 1) {
-                        cancel = lot_cancellation.reduce(function(prev_doc, curr_doc) {
-                            return (max_date(prev_doc) > max_date(curr_doc)) ? curr_doc : prev_doc;
-                        });
-
-                        if (max_date(cancel) < (new Date(bids_disclojure_date))) {
-                            return false;
-                        }
-                    } else {
-                        if (max_date(lot_cancellation[0]) < (new Date(bids_disclojure_date))) {
-                            return false;
-                        }
-                    }
-
-                }
-            }
             if (! check_lot_bids(tender, lot)) {
                 return false;
             }
