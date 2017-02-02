@@ -1,6 +1,6 @@
 import logging
 from reports.core import (
-    BaseBidsGenerator,
+    BaseTendersGenerator,
     RowMixin,
     RowInvoiceMixin,
     HeadersToRowMixin,
@@ -13,25 +13,29 @@ from reports.helpers import (
 logger = logging.getLogger(__name__)
 
 
-class Bids(BaseBidsGenerator,
-           RowMixin,
-           HeadersToRowMixin,
-           CSVMixin
-           ):
+class Tenders(BaseTendersGenerator,
+              RowMixin,
+              HeadersToRowMixin,
+              CSVMixin
+              ):
     headers = [
         u"tender",
         u"tenderID",
         u"lot",
+        u"status",
+        u"lot_status",
+        u"kind",
         u"value",
         u"currency",
-        u"bid",
         u'rate',
         u"bill"
     ]
-    module = 'bids'
+    module = 'tenders'
 
     def row(self, row):
         record = self.record(row)
+        if record.get('kind', '') == 'other':
+            return
         bill = self.get_payment(record['value'])
         logger.info(
             "Bill {} for tender {} with value {}".format(
@@ -43,20 +47,22 @@ class Bids(BaseBidsGenerator,
         return row
 
 
-class Invoices(BaseBidsGenerator,
-               RowInvoiceMixin,
-               HeadersToRowMixin,
-               CSVMixin
-               ):
+class Refunds(BaseTendersGenerator,
+              RowInvoiceMixin,
+              HeadersToRowMixin,
+              CSVMixin
+              ):
     counter = [0 for _ in range(5)]
-    module = 'invoices'
+    module = 'refunds'
 
     def __init__(self, config):
         self.headers = config.headers
-        BaseBidsGenerator.__init__(self, config)
+        BaseTendersGenerator.__init__(self, config)
 
     def row(self, row):
         record = self.record(row)
+        if record.get('kind', '') == 'other':
+            return
         payment = self.get_payment(record['value'])
         for i, x in enumerate(self.config.payments):
             if payment == x:
