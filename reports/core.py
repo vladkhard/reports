@@ -3,26 +3,31 @@ import os.path
 import csv
 import os
 import os.path
+import logging
 from couchdb.design import ViewDefinition
 
 from reports.design import (
     bids_owner_date,
     tenders_owner_date
 )
-
+from reports.helpers import (
+    value_currency_normalize
+)
 
 views = [bids_owner_date, tenders_owner_date]
-
+logger = logging.getLogger(__name__)
 
 class BaseUtility(object):
 
     def __init__(self, config):
         self.config = config
         self.db = couchdb.Database(
-            self.config.db_url
+            self.config.db_url,
+            session=couchdb.Session(retry_delays=range(10))
         )
         self.adb = couchdb.Database(
-            self.config.admin_db_url
+            self.config.admin_db_url,
+            session=couchdb.Session(retry_delays=range(10))
         )
         ViewDefinition.sync_many(self.adb, views)
 
@@ -72,3 +77,42 @@ class BaseBidsUtility(BaseUtility):
 class BaseTendersUtility(BaseUtility):
 
     view = 'report/tenders_owner_date'
+
+
+class RowMixin(object):
+
+    def rows(self, response):
+        for resp in response:
+            row = self.row(resp["value"])
+            if row:
+                yield row
+
+
+class RowInvoiceMixin(object):
+
+    def rows(self):
+        for resp in self.response:
+            self.row(resp['value'])
+        for row in [
+            self.payments,
+            self.counter,
+            [c * v for c, v in zip(self.counter, self.config.payments)]
+        ]:
+            yield row
+
+
+class HeadersToRowMixin(object):
+
+    def record(self, row):
+        record = {header: row.get(header, '') for header in self.headers}
+        if str(record['currency']) != 'UAH':
+            value = record['value']
+            record['value'], record['rate'] = value_currency_normalize(
+                float(record['value']),
+                record['currency'],
+                record['startdate']
+            )
+            logger.info('Changed value {} -> {} by exchange rate'
+                        ' {} ({})'.format(value, record['value'],
+                                          record['rate'], record['startdate']))
+        return [str(v) for v in record.values()]
