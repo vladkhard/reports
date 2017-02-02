@@ -4,6 +4,9 @@ import requests
 import json
 import requests_cache
 import re
+import arrow
+import time
+from dateutil.parser import parse
 
 
 requests_cache.install_cache('exchange_cache')
@@ -260,3 +263,10 @@ def get_send_args_parser():
     )
 
     return parser
+
+
+def convert_date(date, from_tz='Europe/Kiev', to_tz='UTC'):
+    if len(date) < 3:
+        date = time.strftime("%Y-%m-") + date
+    date = arrow.get(parse(date), from_tz)
+    return date.to(to_tz).strftime("%Y-%m-%dT%H:%M:%S.%f")
