@@ -1,61 +1,66 @@
-[db]
-host = ${parts['couchdb.ini'].host}
-port = ${parts['couchdb.ini'].port}
-name = ${options['db_name']}
+db:
+   host: ${parts['couchdb.ini'].host}
+   port: ${parts['couchdb.ini'].port}
+   name: ${options['db_name']}
+   admin:
+      name: ${options['admin_name']}
+      password: ${options['admin_password']}
 
+   user:
+      name: ${options['user_name']}
+      password: ${options['user_password']} 
 
-[admin]
-username = ${options['admin_name']}
-password = ${options['admin_password']}
+payments:
+   thresholds:
+      - 20000
+      - 50000
+      - 200000
+      - 1000000
+   cdb: 
+      - 7
+      - 50
+      - 150
+      - 250
+      - 700
+   emall:
+      - 5
+      - 20
+      - 50
+      - 75
+      - 350
 
-[user]
-username = ${options['user_name']}
-password = ${options['user_password']} 
+out:
+   out_dir: ${parts.buildout.directory}/var/reports
 
-[payments]
-thresholds: 20000, 50000, 200000, 1000000
-cdb: 7, 50, 150, 250, 700
-emall: 5, 20, 50, 75, 350
+api:
+   host: ${options['api_host']}
+   version: ${options['api_ver']}
 
-[out]
-out_dir = ${parts.buildout.directory}/var/reports
+aws:
+   bucket: ${options['bucket']}
+   expires: ${options['expires']}
+   s3_pass_path: ${options['s3_pass_path']}
+   ses_pass_path: ${options['ses_pass_path']}
 
-[api]
-host = ${options['api_host']}
-version = ${options['api_ver']}
+email:
+   smtp_server: ${options['smtp_server']}
+   smtp_port: ${options['smtp_port']}
+   verified_email: ${options['verified_email']}
 
-[aws]
-bucket = ${options['bucket']}
-expires = ${options['expires']}
-s3_pass_path = ${options['s3_pass_path']}
-ses_pass_path = ${options['ses_pass_path']}
+brokers:
+   ${options['emails']}
 
-[email]
-smtp_server = ${options['smtp_server']}
-smtp_port = ${options['smtp_port']}
-verified_email = ${options['verified_email']}
+version: 1
+loggers:
+   root:
+      handlers: stream_handler
+handlers:
+   stream_handler:
+      class: logging.handlers.RotatingFileHandler
+      level: INFO
+      formatter: formatter
+      args: "('${parts.buildout.directory}/var/log/reports.log', 'a', 1048576, 10)"
 
-[brokers_emails]
-${options['emails']}
-
-[loggers]
-keys=root
-
-[handlers]
-keys=stream_handler
-
-[formatters]
-keys=formatter
-
-[logger_root]
-level=INFO
-handlers=stream_handler
-
-[handler_stream_handler]
-class=logging.handlers.RotatingFileHandler
-level=INFO
-formatter=formatter
-args=('${parts.buildout.directory}/var/log/reports.log', 'a', 1048576, 10)
-
-[formatter_formatter]
-format=%(asctime)s %(name)-12s %(levelname)-8s %(message)s
+formatters:
+   formatter:
+      format: "%(asctime)s %(name)-12s %(levelname)-8s %(message)s"
