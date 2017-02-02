@@ -1,7 +1,13 @@
 from __future__ import print_function
+
 import os.path
 import yaml
-from reports.helpers import convert_date, create_db_url
+
+from reports.helpers import (
+    convert_date,
+    create_db_url,
+    thresholds_headers
+)
 
 
 ARGS = [
@@ -9,8 +15,6 @@ ARGS = [
     'period',
     'config',
     'timezone',
-    'kind',
-    'ignore',
     'include_cancelled'
 ]
 
@@ -92,3 +96,7 @@ class Config(object):
             db['admin']['name'],
             db['admin']['password']
         )
+
+    @property
+    def headers(self):
+        return thresholds_headers(self.coding.get('thresholds'))
