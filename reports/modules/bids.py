@@ -12,22 +12,24 @@ from reports.helpers import (
 
 logger = logging.getLogger(__name__)
 
+headers = [
+    "tender",
+    "tenderID",
+    "lot",
+    "value",
+    "currency",
+    "bid",
+    'rate',
+    "bill"
+]
 
 class Bids(BaseBidsGenerator,
            RowMixin,
            HeadersToRowMixin,
            CSVMixin
            ):
-    headers = [
-        u"tender",
-        u"tenderID",
-        u"lot",
-        u"value",
-        u"currency",
-        u"bid",
-        u'rate',
-        u"bill"
-    ]
+    fields = headers
+    headers = headers
     module = 'bids'
 
     def row(self, row):
@@ -50,6 +52,7 @@ class Invoices(BaseBidsGenerator,
                ):
     counter = [0 for _ in range(5)]
     module = 'invoices'
+    fields = headers
 
     def __init__(self, config):
         self.headers = config.headers

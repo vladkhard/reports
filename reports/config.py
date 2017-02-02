@@ -27,37 +27,36 @@ class Config(object):
                              "Please provide one")
         for key in ARGS:
             setattr(self, key, '')
-        self.config = yaml.load(path)
+        with open(path, 'r') as yaml_in:
+            self.config = yaml.load(yaml_in)
         self.module = ''
 
     @classmethod
-    def from_namespace(cls, args, module):
-        inst = cls(args.config, module)
+    def from_namespace(cls, args):
+        inst = cls(args.config)
         for key in [a for a in ARGS if a != 'config']:
             if hasattr(args, key):
-                setattr(cls, key, getattr(args, key))
+                setattr(inst, key, getattr(args, key))
         return inst
 
     @property
     def thresholds(self):
-        return [float(i) for i in self.config.get('payments', 'thresholds')]
+        return [float(i) for i in self.config['payments']['thresholds']]
 
     @property
     def payments(self):
-        section = 'emall' if self.modul in ['refunds', 'tenders'] else 'cdb'
-        return [float(i.strip()) for i in self.config.get('payments')(section)]
+        section = 'emall' if self.module in ['refunds', 'tenders'] else 'cdb'
+        return self.config['payments'][section]
 
     @property
     def out_path(self):
         return self.config.get('out', '').get('out_dir', '')
 
-    @property
     def start_date(self):
         if len(self.period) > 0:
             return convert_date(self.period[0])
         return ''
 
-    @property
     def end_date(self):
         if len(self.period) > 1:
             return convert_date(self.period[1])
@@ -65,15 +64,15 @@ class Config(object):
 
     @property
     def out_file(self):
-        start = self.start_date.split('T')[0]\
+        start = self.start_date().split('T')[0]\
                 if self.start_date else ''
-        end = self.end_date.split('T')[0]\
+        end = self.end_date().split('T')[0]\
                 if self.end_date else ''
         name = "{}@{}--{}-{}.csv".format(
             self.broker,
             start,
             end,
-            self.operation
+            self.module
         )
         return os.path.join(self.out_path, name)
 
@@ -84,7 +83,8 @@ class Config(object):
             db['host'],
             db['port'],
             db['user']['name'],
-            db['user']['password']
+            db['user']['password'],
+            db['name']
         )
 
     @property
@@ -94,9 +94,10 @@ class Config(object):
             db['host'],
             db['port'],
             db['admin']['name'],
-            db['admin']['password']
+            db['admin']['password'],
+            db['name']
         )
 
     @property
     def headers(self):
-        return thresholds_headers(self.coding.get('thresholds'))
+        return thresholds_headers(self.thresholds)

@@ -12,25 +12,28 @@ from reports.helpers import (
 
 logger = logging.getLogger(__name__)
 
+headers = [
+    "tender",
+    "tenderID",
+    "lot",
+    "status",
+    "lot_status",
+    "kind",
+    "value",
+    "currency",
+    'rate',
+    "bill"
+]
+
 
 class Tenders(BaseTendersGenerator,
               RowMixin,
               HeadersToRowMixin,
               CSVMixin
               ):
-    headers = [
-        u"tender",
-        u"tenderID",
-        u"lot",
-        u"status",
-        u"lot_status",
-        u"kind",
-        u"value",
-        u"currency",
-        u'rate',
-        u"bill"
-    ]
     module = 'tenders'
+    headers = headers
+    fields = headers
 
     def row(self, row):
         record = self.record(row)
@@ -54,6 +57,7 @@ class Refunds(BaseTendersGenerator,
               ):
     counter = [0 for _ in range(5)]
     module = 'refunds'
+    fields = headers
 
     def __init__(self, config):
         self.headers = config.headers
