@@ -17,10 +17,14 @@ from reports.helpers import (
 views = [bids_owner_date, tenders_owner_date]
 logger = logging.getLogger(__name__)
 
+
 class BaseUtility(object):
+
+    module = 'base'
 
     def __init__(self, config):
         self.config = config
+        self.config.module = self.__class__.module
         self.db = couchdb.Database(
             self.config.db_url,
             session=couchdb.Session(retry_delays=range(10))
@@ -37,9 +41,8 @@ class BaseUtility(object):
                 return self.config.payments[index]
         return self.config.payments[-1]
 
-    def _get_response(self):
-        self._sync_views()
-
+    @property
+    def response(self):
         startkey = (self.config.broker, self.config.start_date)
         if not self.config.end_date:
             endkey = (self.config.broker, "9999-12-30T00:00:00.000000")
@@ -51,38 +54,22 @@ class BaseUtility(object):
             endkey=endkey
         )
 
-    def write_csv(self):
-        if not self.headers:
-            raise ValueError
-        path = os.path.dirname(os.path.abspath(self.config.out_file))
-        if not os.path.exists(path):
-            os.makedirs(path)
-        with open(self.config.out_file, 'w') as out_file:
-            writer = csv.writer(out_file)
-            writer.writerow(self.headers)
-            for row in self.rows():
-                writer.writerow(row)
 
-    def run(self):
-        self.get_response()
-        self.out_name()
-        self.write_csv()
-
-
-class BaseBidsUtility(BaseUtility):
+class BaseBidsGenerator(BaseUtility):
 
     view = 'report/bids_owner_date'
 
 
-class BaseTendersUtility(BaseUtility):
+class BaseTendersGenerator(BaseUtility):
 
     view = 'report/tenders_owner_date'
 
 
 class RowMixin(object):
 
-    def rows(self, response):
-        for resp in response:
+    @property
+    def rows(self):
+        for resp in self.response:
             row = self.row(resp["value"])
             if row:
                 yield row
@@ -90,6 +77,7 @@ class RowMixin(object):
 
 class RowInvoiceMixin(object):
 
+    @property
     def rows(self):
         for resp in self.response:
             self.row(resp['value'])
@@ -115,4 +103,19 @@ class HeadersToRowMixin(object):
             logger.info('Changed value {} -> {} by exchange rate'
                         ' {} ({})'.format(value, record['value'],
                                           record['rate'], record['startdate']))
-        return [str(v) for v in record.values()]
+        return record
+
+
+class CSVMixin(object):
+
+    def run(self):
+        if not self.headers:
+            raise ValueError
+        path = os.path.dirname(os.path.abspath(self.config.out_file))
+        if not os.path.exists(path):
+            os.makedirs(path)
+            with open(self.config.out_file, 'w') as out_file:
+                writer = csv.writer(out_file)
+                writer.writerow(self.headers)
+                for row in self.rows:
+                    writer.writerow(row)

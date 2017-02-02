@@ -17,14 +17,14 @@ ARGS = [
 
 class Config(object):
 
-    def __init__(self, path, module):
+    def __init__(self, path):
         if not os.path.exists(path):
             raise ValueError("Config file does not exists."
                              "Please provide one")
         for key in ARGS:
             setattr(self, key, '')
         self.config = yaml.load(path)
-        self.module = module
+        self.module = ''
 
     @classmethod
     def from_namespace(cls, args, module):
