@@ -651,7 +651,7 @@ def test_bids_view_check_cancelled_lot_2_cancellations_fail(db, ut):
         "awardPeriod": {
             "startDate": "2016-12-13T15:10:00+02:00",
         },
-         "cancellations":[{
+        "cancellations":[{
                         "cancellationOf": "lot",
                         "status": "active",
                         "date": "2016-11-13T15:10:00+02:00",
