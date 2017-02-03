@@ -4,6 +4,7 @@ import csv
 import os
 import os.path
 import logging
+from collections import OrderedDict
 from couchdb.design import ViewDefinition
 
 from reports.design import (
@@ -90,7 +91,9 @@ class RowInvoiceMixin(object):
 class HeadersToRowMixin(object):
 
     def record(self, row):
-        record = {header: row.get(header, '') for header in self.fields}
+        record = OrderedDict()
+        for f in self.fields:
+            record[f] = row.get(f, '')
         if str(row[u'currency']) != 'UAH':
             value = row['value']
             record['value'], record['rate'] = value_currency_normalize(
