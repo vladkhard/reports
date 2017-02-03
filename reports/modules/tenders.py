@@ -16,8 +16,6 @@ headers = [
     "tender",
     "tenderID",
     "lot",
-    "status",
-    "lot_status",
     "kind",
     "value",
     "currency",
@@ -39,15 +37,13 @@ class Tenders(BaseTendersGenerator,
         record = self.record(row)
         if record.get('kind', '') == 'other':
             return
-        bill = self.get_payment(record['value'])
+        record['bill'] = self.get_payment(record['value'])
         logger.info(
             "Bill {} for tender {} with value {}".format(
-                bill, record['tender'], record['value']
+                record['bill'], record['tender'], record['value']
             )
         )
-        row = [str(c) for c in record.values()]
-        row.append(str(bill))
-        return row
+        return [str(c) for c in record.values()]
 
 
 class Refunds(BaseTendersGenerator,

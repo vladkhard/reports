@@ -23,6 +23,7 @@ headers = [
     "bill"
 ]
 
+
 class Bids(BaseBidsGenerator,
            RowMixin,
            HeadersToRowMixin,
@@ -34,15 +35,16 @@ class Bids(BaseBidsGenerator,
 
     def row(self, row):
         record = self.record(row)
-        bill = self.get_payment(record['value'])
+        record['bill'] = self.get_payment(record['value'])
+        if self.config.include_cancelled and row.get('cancelled', ''):
+            record['bill'] = -record['bill']
+
         logger.info(
             "Bill {} for tender {} with value {}".format(
-                bill, record['tender'], record['value']
+                record['bill'], record['tender'], record['value']
             )
         )
-        row = [str(c) for c in record.values()]
-        row.append(str(bill))
-        return row
+        return [str(c) for c in record.values()]
 
 
 class Invoices(BaseBidsGenerator,
