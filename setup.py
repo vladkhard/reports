@@ -36,6 +36,7 @@ setup(
             'tenders = reports.scripts.tenders:run',
             'refunds = reports.scripts.refunds:run',
             'invoices = reports.scripts.invoices:run',
+            'generate = reports.report:run',
             'zip = reports.scripts.zip:run',
             'send = reports.scripts.send:run',
             'init = reports.db_init:run',

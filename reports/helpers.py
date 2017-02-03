@@ -6,6 +6,7 @@ import requests_cache
 import re
 import arrow
 import time
+from datetime import date
 from dateutil.parser import parse
 
 
@@ -145,7 +146,14 @@ def get_send_args_parser():
 
 
 def convert_date(date, from_tz='Europe/Kiev', to_tz='UTC'):
-    if len(date) < 3:
-        date = time.strftime("%Y-%m-") + date
     date = arrow.get(parse(date), from_tz)
     return date.to(to_tz).strftime("%Y-%m-%dT%H:%M:%S.%f")
+
+
+def generation_period():
+    end = date.today().replace(day=1)
+    if end.month == 1:
+        start = end.replace(year=end.year-1, month=12, day=1)
+    else:
+        start = end.replace(month=end.month-1, day=1)
+    return start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')
