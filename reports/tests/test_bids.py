@@ -167,6 +167,7 @@ def test_bids_view_invalid_method(db, ut):
 #  start new bids_view tests
 
 def test_bids_view_invalid_doc_type(db, ut):
+    # (doc.doc_type !== "Tender") {return;}
     data = {
         "doc_type": "new Tender",
         "awardPeriod": {
@@ -178,6 +179,7 @@ def test_bids_view_invalid_doc_type(db, ut):
     assertLen(0, data, ut)
 
 def test_bids_view_EUprocurement_type_valid_data(db, ut):
+    # (count_lot_qualifications(tender.qualifications, lot.id) < 2) == False
     data = {
         "procurementMethodType": "aboveThresholdEU",
         "qualifications": [{
@@ -199,6 +201,7 @@ def test_bids_view_EUprocurement_type_valid_data(db, ut):
     assertLen(1, data, ut)
 
 def test_bids_view_procurement_typeEU_without_qualifications(db, ut):
+    # (count_lot_qualifications(tender.qualifications, lot.id) < 2) == True
     data = {
         "procurementMethodType": "aboveThresholdEU",
         "awardPeriod": {
@@ -213,6 +216,8 @@ def test_bids_view_procurement_typeEU_without_qualifications(db, ut):
     assertLen(0, data, ut)
 
 def test_bids_view_have_no_disclojure_date(db, ut):
+    # var bids_disclojure_date = (doc.qualificationPeriod || {}).startDate || (doc.awardPeriod || {}).startDate || null;
+    # if(!bids_disclojure_date) { return; }
     data = {
         "awardPeriod": {
             "startDate": "",
@@ -223,6 +228,8 @@ def test_bids_view_have_no_disclojure_date(db, ut):
     assertLen(0, data, ut)
 
 def test_bids_view_compet_dialog_stage2_fail_check(db, ut):
+    # if (['competitiveDialogueEU.stage2', 'competitiveDialogueUA.stage2'].indexOf(doc.procurementMethodType) !== -1) {
+    # log('Skipping tender stage2 ' + doc._id)        return;    }
     data = {
         "procurementMethodType": "competitiveDialogueEU.stage2",
         "awardPeriod": {
@@ -237,6 +244,7 @@ def test_bids_view_compet_dialog_stage2_fail_check(db, ut):
     assertLen(0, data, ut)
 
 def test_bids_view_cancelled_tender(db, ut):
+    # (tender_cancellations.length > 1)
     data = {
         "status": "cancelled",
         "cancellations":[{
@@ -362,6 +370,7 @@ def test_bids_view_cancelled_few_tenders_after_disclojure_date(db, ut):
     assertLen(1, data, ut)
 
 def test_bids_view_check_tender_bids_UA(db, ut):
+    # if (tender.numberOfBids < 2) == True
     data = {
         "status": "cancelled",
         "procurementMethodType": "aboveThresholdUA",
@@ -380,6 +389,7 @@ def test_bids_view_check_tender_bids_UA(db, ut):
     assertLen(0, data, ut)
 
 def test_bids_view_check_tender_bids_EU(db, ut):
+    # if ((tender.qualifications || []).length < 2) == false
     data = {
         "status": "cancelled",
         "procurementMethodType": "aboveThresholdEU",
@@ -408,6 +418,7 @@ def test_bids_view_check_tender_bids_EU(db, ut):
 
 
 def test_bids_view_check_tender_bids_UA_defense(db, ut):
+    # if ((tender.numberOfBids < 2) && !('awards' in tender)) == False
     data = {
         "status": "cancelled",
         "numberOfBids": 2,
@@ -426,6 +437,7 @@ def test_bids_view_check_tender_bids_UA_defense(db, ut):
     assertLen(1, data, ut)
 
 def test_bids_view_check_tender_bids_UA_defense_0_bids(db, ut):
+    # if ((tender.numberOfBids < 2) && !('awards' in tender)) == True
     data = {
         "status": "cancelled",
         "numberOfBids": 0,
@@ -444,6 +456,7 @@ def test_bids_view_check_tender_bids_UA_defense_0_bids(db, ut):
     assertLen(0, data, ut)
 
 def test_bids_view_check_tender_bids_CD_EU(db, ut):
+    #  if ((tender.qualifications || []).length < 3) == False
     data = {
         "status": "cancelled",
         "procurementMethodType": "competitiveDialogueEU",
@@ -474,6 +487,7 @@ def test_bids_view_check_tender_bids_CD_EU(db, ut):
     assertLen(1, data, ut)
 
 def test_bids_view_check_tender_bids_CD_EU_two_qual(db, ut):
+    #  if ((tender.qualifications || []).length < 3) == True
     data = {
         "status": "cancelled",
         "procurementMethodType": "competitiveDialogueEU",
@@ -501,6 +515,7 @@ def test_bids_view_check_tender_bids_CD_EU_two_qual(db, ut):
     assertLen(0, data, ut)
 
 def test_bids_view_check_tender_unsuccesfull(db, ut):
+    # if (! check_tender_bids(tender)) == True
     data = {
         "status": "unsuccessful",
         "procurementMethodType": "competitiveDialogueEU",
@@ -526,14 +541,10 @@ def test_bids_view_check_tender_unsuccesfull(db, ut):
     assertLen(1, data, ut)
 
 def test_bids_view_check_tender_unsuccesfull_invalid(db, ut):
+    # if (! check_tender_bids(tender)) == True
     data = {
         "status": "unsuccessful",
         "procurementMethodType": "competitiveDialogueEU",
-        "cancellations":[{
-                        "cancellationOf": "tender",
-                        "date": "2016-11-13T15:17:00+02:00",
-                        "status": "active"
-                    }],
         "qualifications": [{
             "bidID": "f55962b1374b43ddb886821c0582bc7f"
         },
@@ -553,6 +564,8 @@ def test_bids_view_check_tender_unsuccesfull_invalid(db, ut):
     assertLen(0, data, ut)
 
 def test_bids_view_check_cancelled_lot(db, ut):
+    # if ('date' in lot) == False
+    # lot_cancellation = 0
     data = {
         "procurementMethodType": "belowThreshold",
         "awardPeriod": {
@@ -564,7 +577,9 @@ def test_bids_view_check_cancelled_lot(db, ut):
     }
     assertLen(1, data, ut)
 
-def test_bids_view_check_cancelled_lot_with_date(db, ut):
+def test_bids_view_check_cancelled_lot_with_date_fail(db, ut):
+    # if ('date' in lot) == True
+    #  ((new Date(lot.date)) < (new Date(bids_disclojure_date))) == True
     data = {
         "procurementMethodType": "belowThreshold",
         "awardPeriod": {
@@ -586,6 +601,31 @@ def test_bids_view_check_cancelled_lot_with_date(db, ut):
         "owner": "teser"
     }
     assertLen(0, data, ut)
+
+def test_bids_view_check_cancelled_lot_with_date_pass(db, ut):
+    # if ('date' in lot) == True
+    #  ((new Date(lot.date)) < (new Date(bids_disclojure_date))) == True
+    data = {
+        "procurementMethodType": "belowThreshold",
+        "awardPeriod": {
+            "startDate": test_award_period,
+        },
+        "lots": [
+            {
+                "status": "cancelled",
+                "date": "2016-04-27T16:36:58.983102+03:00",
+                "id": "324d7b2dd7a54df29bad6d0b7c91b2e9",
+                "value": {
+                    "currency": "UAH",
+                    "amount": 2000,
+                    "valueAddedTaxIncluded": False,
+                },
+            }
+        ],
+        "bids": test_bids,
+        "owner": "teser"
+    }
+    assertLen(1, data, ut)
 
 def test_bids_view_check_cancelled_related_lot(db, ut):
     # ((cancellation.status === 'active') && (cancellation.cancellationOf === 'lot') && (cancellation.relatedLot === lot.id)) == True
@@ -703,6 +743,7 @@ def test_bids_view_check_cancelled_lot_2_cancellations(db, ut):
     assertLen(1, data, ut)
 
 def test_bids_view_check_unsuccessfull(db, ut):
+    # if (! check_lot_bids(tender, lot)) == False
     data = {
         "procurementMethodType": "belowThreshold",
         "awardPeriod": {
@@ -725,6 +766,7 @@ def test_bids_view_check_unsuccessfull(db, ut):
     assertLen(1, data, ut)
 
 def test_bids_view_check_unsuccessfull_fail(db, ut):
+    # if (! check_lot_bids(tender, lot)) == True
     data = {
         "procurementMethodType": "aboveThresholdUA.defense",
         "awardPeriod": {
@@ -747,6 +789,7 @@ def test_bids_view_check_unsuccessfull_fail(db, ut):
     assertLen(0, data, ut)
 
 def test_bids_view_check_lot_bids_unsuccessfull_UA(db, ut):
+    #  if (count_lot_bids(lot, tender) < 2) == False
     data = {
         "procurementMethodType": "aboveThresholdUA",
         "awardPeriod": {
@@ -769,6 +812,7 @@ def test_bids_view_check_lot_bids_unsuccessfull_UA(db, ut):
     assertLen(1, data, ut)
 
 def test_bids_view_check_lot_bids_unsuccessfull_UA_fail(db, ut):
+    #  if (count_lot_bids(lot, tender) < 2) == True
     data = {
         "procurementMethodType": "aboveThresholdUA",
         "awardPeriod": {
@@ -791,6 +835,7 @@ def test_bids_view_check_lot_bids_unsuccessfull_UA_fail(db, ut):
     assertLen(0, data, ut)
 
 def test_bids_view_check_lot_bids_unsuccessfull_EU(db, ut):
+    # if (count_lot_qualifications(tender.qualifications, lot.id) < 2) == False
     data = {
         "status": "unsuccessful",
         "procurementMethodType": "aboveThresholdEU",
@@ -826,6 +871,7 @@ def test_bids_view_check_lot_bids_unsuccessfull_EU(db, ut):
     assertLen(1, data, ut)
 
 def test_bids_view_check_lot_bids_unsuccessfull_EU_1_qual_fail(db, ut):
+    # if (count_lot_qualifications(tender.qualifications, lot.id) < 2) == True
     data = {
         "status": "unsuccessful",
         "procurementMethodType": "aboveThresholdEU",
@@ -941,6 +987,7 @@ def test_bids_view_check_lot_bids_unsuccessfull_UA_def_with_award_and_1_bid(db, 
     assertLen(1, data, ut)
 
 def test_bids_view_check_lot_bids_unsuccessfull_competitiveDialogueEU(db, ut):
+    # if (count_lot_qualifications(tender.qualifications, lot.id) < 3) == False
     data = {
         "status": "unsuccessful",
         "procurementMethodType": "competitiveDialogueEU",
@@ -979,6 +1026,7 @@ def test_bids_view_check_lot_bids_unsuccessfull_competitiveDialogueEU(db, ut):
     assertLen(1, data, ut)
 
 def test_bids_view_check_lot_bids_unsuccessfull_competitiveDialogueEU_fail_with_2_qualifications(db, ut):
+    # if (count_lot_qualifications(tender.qualifications, lot.id) < 3) == True
     data = {
         "status": "unsuccessful",
         "procurementMethodType": "competitiveDialogueEU",
@@ -1014,6 +1062,10 @@ def test_bids_view_check_lot_bids_unsuccessfull_competitiveDialogueEU_fail_with_
     assertLen(0, data, ut)
 
 def test_bids_view_check_audit_documents(db, ut):
+    # if(is_multilot) == True
+    # var audits = (tender.documents || []).filter(function(tender_doc) {
+    # return tender_doc.title.indexOf("audit_" + id + "_" + lot.id) === 0; });
+    # audit = audits[0]
     data = {
         "status": "unsuccessful",
         "procurementMethodType": "belowThreshold",
@@ -1049,6 +1101,8 @@ def test_bids_view_check_audit_documents(db, ut):
     assert response[0]['value']['audits'] != None
 
 def test_bids_view_check_audit_2_documents_dateModified_check(db, ut):
+    # if(is_multilot) == True
+    # if (audits.length > 1) { audit = audits.reduce(function(prev_doc, curr_doc) {return (prev_doc.dateModified > curr_doc.dateModified) ? curr_doc : prev_doc;});
     data = {
         "status": "unsuccessful",
         "procurementMethodType": "belowThreshold",
@@ -1094,6 +1148,8 @@ def test_bids_view_check_audit_2_documents_dateModified_check(db, ut):
     assert response[0]['value']['audits']['datePublished'] == "2016-06-01T12:18:40.193283+03:00"
 
 def test_bids_view_check_audit_2_documents_dateModified_check_without_lots(db, ut):
+    # if(is_multilot) == False
+    # if (audits.length > 1) == True
     data = {
         "status": "unsuccessful",
         "procurementMethodType": "belowThreshold",
@@ -1130,6 +1186,8 @@ def test_bids_view_check_audit_2_documents_dateModified_check_without_lots(db, u
     assert response[0]['value']['audits']['datePublished'] == "2016-06-01T12:18:40.193283+03:00"
     
 def test_bids_view_check_audit_1_document_dateModified_check_without_lots(db, ut):
+    # if(is_multilot) == False
+    # if (audits.length > 1) == False
     data = {
         "status": "unsuccessful",
         "procurementMethodType": "belowThreshold",
