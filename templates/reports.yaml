@@ -31,11 +31,12 @@ payments:
 
 out:
    out_dir: ${parts.buildout.directory}/var/reports
+   work_dir: ${parts.buildout.directory}
 
 api:
    host: ${options['api_host']}
    version: ${options['api_ver']}
-
+vault: ${options['vault']}
 aws:
    bucket: ${options['bucket']}
    expires: ${options['expires']}
@@ -46,9 +47,8 @@ email:
    smtp_server: ${options['smtp_server']}
    smtp_port: ${options['smtp_port']}
    verified_email: ${options['verified_email']}
-
-brokers:
-   ${options['emails']}
+zip_path: ${options['zip_path']}
+${options['emails']}
 
 version: 1
 loggers:
