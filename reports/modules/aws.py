@@ -86,7 +86,6 @@ class AWSClient(object):
         cred = self.vault.ses()
         user = cred.get('AWS_ACCESS_KEY_ID')
         password = cred.get('AWS_SECRET_ACCESS_KEY')
-        import pdb;pdb.set_trace()
         smtpserver = smtplib.SMTP(self.config.smtp_server,
                                   str(self.config.smtp_port))
 
