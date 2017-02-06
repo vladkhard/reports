@@ -157,7 +157,7 @@ class Report(object):
                 as part_csv:
             writer = csv.writer(part_csv)
             writer.writerow(bids_headers)
-            for broker in self.config.brokers:
+            for broker in [b for b in self.config.brokers if b != 'all']:
                 name = '{}@{}--{}-bids.csv'.format(broker,
                                                    self.config.start_date,
                                                    self.config.end_date)
@@ -187,7 +187,7 @@ class Report(object):
                                            self.config.end_date,
                                            name))
                           for name in ['tenders', 'refunds']
-                          for broker in self.config.brokers])
+                          for broker in self.config.brokers if broker != 'all'])
 
     def create_all_bids_archive(self):
         zname = 'all@{}--{}-bids.zip'.format(
@@ -203,14 +203,14 @@ class Report(object):
                              broker,
                              self.config.start_date,
                              self.config.end_date))
-            for broker in self.config.brokers
+            for broker in self.config.brokers if broker != 'all'
         ]
 
         self._zip(zname, files, self.vault.broker_password('all'))
 
     def create_brokers_archives(self):
 
-        for broker in self.config.brokers:
+        for broker in [b for b in self.config.brokers if b != 'all']:
             zip_name = '{}@{}--{}-{}.zip'.format(broker,
                                                  self.config.start_date,
                                                  self.config.end_date,
@@ -252,7 +252,7 @@ class Report(object):
                                                    self.config.end_date,
                                                    op))
             for op in self.config.include
-            for broker in self.config.brokers
+            for broker in self.config.brokers if broker != 'all'
         ] + [
             os.path.join(self.config.work_dir,
                          'all@{}--{}-bids.csv'.format(self.config.start_date,
@@ -264,7 +264,7 @@ class Report(object):
         if self.config.timestamp:
             self.aws.send_from_timestamp(self.config.timestamp)
         else:
-            for broker in self.config.brokers:
+            for broker in [b for b in self.config.brokers if b != 'all']:
                 self.generate_for_broker(broker)
             self.create_all_bids()
             self.create_tenders_archive()
