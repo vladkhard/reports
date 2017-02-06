@@ -1,5 +1,6 @@
 from reports.modules import AWSClient
 from reports.vault import Vault
+from reports.report import ReportConfig
 from reports.helpers import (
     get_send_args_parser
 )
@@ -8,15 +9,11 @@ from reports.helpers import (
 def run():
     parser = get_send_args_parser()
     args = parser.parse_args()
-    client = AWSClient(args.config)
-
+    config = ReportConfig.from_namespace(args)
+    client = AWSClient(config)
     if args.brokers:
         client.brokers = args.brokers
-
     if args.exists:
-        if not args.timestamp:
-            print "Timestamp is required"
-            sys.exit(1)
         client.send_from_timestamp(args.timestamp)
     else:
         client.send_files(args.files, args.timestamp)
