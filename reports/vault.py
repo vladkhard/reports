@@ -18,4 +18,5 @@ class Vault(object):
         return self.client.s3_credentials(self.config.s3)
 
     def broker_password(self, broker):
-        return self.client.broker_password(join(self.config.zip, broker))
+        passwd = self.client.broker_password(join(self.config.zip, broker))
+        return passwd.strip('\n')
