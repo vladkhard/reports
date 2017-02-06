@@ -45,7 +45,8 @@ ARGS = [
     'timestamp',
     'include',
     'timezone',
-    'include_cancelled'
+    'include_cancelled',
+    'to_now'
 ]
 logger = getLogger()
 
@@ -86,6 +87,7 @@ class ReportConfig(object):
         for param in ['period', 'timezone', 'include_cancelled']:
             setattr(config, param, getattr(self, param))
         config.broker = broker
+        config.include_cancelled = self.include_cancelled
         config.period = [convert_date(self.start_date, from_tz='UTC', to_tz='Europe/Kiev'),
                          convert_date(self.end_date, from_tz='UTC', to_tz='Europe/Kiev')]
         return config
@@ -105,8 +107,10 @@ class ReportConfig(object):
 
     @property
     def end_date(self):
-        if len(self.period) < 2:
+        if len(self.period) < 2 and not self.to_now:
             return date.today().replace(day=1).strftime('%Y-%m-%d')
+        if len(self.period) < 2 and self.to_now:
+            return date.today().strftime('%Y-%m-%d')
         return self.period[1].split('T')[0]
 
     @classmethod
@@ -272,7 +276,8 @@ class Report(object):
             self.create_all_bids_archive()
             self.upload_files()
             self.clean_up()
-        self.aws.send_emails()
+        if self.config.notify:
+            self.aws.send_emails()
 
 
 def run():
@@ -281,6 +286,8 @@ def run():
     parser.add_argument('--type', nargs='+', default=['all'])
     parser.add_argument('--period', nargs='+', default=[])
     parser.add_argument('--notify', action='store_true', default=False)
+    parser.add_argument('--to-now', action='store_true', default=False)
+    parser.add_argument('--include-cancelled', action='store_true', default=False)
     parser.add_argument('--notify-brokers', nargs='+')
     parser.add_argument('--brokers', nargs='+')
     parser.add_argument('--timestamp')
