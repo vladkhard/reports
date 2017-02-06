@@ -83,6 +83,8 @@ class AWSClient(object):
                 logger.info("Error during uploading {}. Error: {}".format(f, e))
 
     def send_emails(self, email=None):
+        if getattr(self, 'not_notify', False):
+            return
         cred = self.vault.ses()
         user = cred.get('AWS_ACCESS_KEY_ID')
         password = cred.get('AWS_SECRET_ACCESS_KEY')
@@ -119,11 +121,15 @@ class AWSClient(object):
             aws_secret_access_key=cred.get('AWS_SECRET_ACCESS_KEY'),
             region_name=cred.get('AWS_DEFAULT_REGION')
         )
-        for item in s3.list_objects(Bucket=self.config.bucket, Prefix=timestamp)['Contents']:
-            entry = self.get_entry(os.path.basename(item['Key']))
-            entry['link'] = s3.generate_presigned_url(
-                    'get_object',
-                    Params={'Bucket': self.config.bucket, 'Key': item['Key']},
-                    ExpiresIn=self.config.expires,
-                )
-            self.links.append(entry)
+        try:
+            for item in s3.list_objects(Bucket=self.config.bucket, Prefix=timestamp)['Contents']:
+                entry = self.get_entry(os.path.basename(item['Key']))
+                entry['link'] = s3.generate_presigned_url(
+                        'get_object',
+                        Params={'Bucket': self.config.bucket, 'Key': item['Key']},
+                        ExpiresIn=self.config.expires,
+                    )
+                self.links.append(entry)
+        except Exception as e:
+            logger.fatal("Error: {}".format(e))
+            self.not_notify = True

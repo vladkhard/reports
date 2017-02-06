@@ -4,6 +4,7 @@ import argparse
 import csv
 import pyminizip
 from datetime import date
+from datetime import datetime
 from logging import getLogger
 from logging.config import dictConfig
 from reports.modules import (
@@ -140,6 +141,7 @@ class Report(object):
             'refunds': Refunds,
         }
         self.aws = AWSClient(config, vault=self.vault)
+        self.run_time = datetime.now().strftime('%Y-%m-%d/%H-%M-%S-%f')
 
     def generate_for_broker(self, broker):
         config = self.config.produce_module_config(broker)
@@ -240,7 +242,7 @@ class Report(object):
                                               self.config.end_date,
                                               '-'.join(self.config.include))
                 ]
-            self.aws.send_files([os.path.join(self.config.work_dir, f) for f in files])
+            self.aws.send_files([os.path.join(self.config.work_dir, f) for f in files], timestamp=self.run_time)
 
     def clean_up(self):
         files = [
@@ -259,15 +261,18 @@ class Report(object):
         map(os.remove, files)
 
     def run(self):
-        for broker in self.config.brokers:
-            self.generate_for_broker(broker)
-        self.create_all_bids()
-        self.create_tenders_archive()
-        self.create_brokers_archives()
-        self.create_all_bids_archive()
-        self.upload_files()
+        if self.config.timestamp:
+            self.aws.send_from_timestamp(self.config.timestamp)
+        else:
+            for broker in self.config.brokers:
+                self.generate_for_broker(broker)
+            self.create_all_bids()
+            self.create_tenders_archive()
+            self.create_brokers_archives()
+            self.create_all_bids_archive()
+            self.upload_files()
+            self.clean_up()
         self.aws.send_emails()
-        self.clean_up()
 
 
 def run():
