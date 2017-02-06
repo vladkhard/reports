@@ -108,7 +108,7 @@ class AWSClient(object):
                 else:
                     msg['To'] = COMMASPACE.join(recipients)
                     if (not self.config.notify_brokers) or (self.config.notify_brokers and context['broker'] in self.config.notify_brokers):
-                        smtpserver.sendmail(self.verified_email, recipients,  msg.as_string())
+                        smtpserver.sendmail(self.config.verified_email, recipients,  msg.as_string())
         finally:
             smtpserver.close()
 
