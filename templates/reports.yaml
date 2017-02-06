@@ -51,16 +51,31 @@ zip_path: ${options['zip_path']}
 ${options['emails']}
 
 version: 1
-loggers:
-   root:
-      handlers: stream_handler
-handlers:
-   stream_handler:
-      class: logging.handlers.RotatingFileHandler
-      level: INFO
-      formatter: formatter
-      args: "('${parts.buildout.directory}/var/log/reports.log', 'a', 1048576, 10)"
-
 formatters:
-   formatter:
-      format: "%(asctime)s %(name)-12s %(levelname)-8s %(message)s"
+    simpleFormater:
+        format: '%(asctime)s - %(levelname)s: %(message)s'
+        datefmt: '%Y/%m/%d %H:%M:%S'
+
+handlers:
+    console:
+        class: logging.StreamHandler
+        formatter: simpleFormater
+        level: DEBUG
+        stream: ext://sys.stdout
+    file:
+        class : logging.FileHandler
+        formatter: simpleFormater
+        level: WARNING
+        filename: ${parts.buildout.directory}/var/log/reports.log
+
+loggers:
+    clogger:
+        level: DEBUG
+        handlers: [console]
+    flogger:
+        level: WARNING
+        handlers: [file]
+
+root:
+    level: DEBUG
+    handlers: [console, file]
