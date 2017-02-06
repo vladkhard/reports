@@ -8,7 +8,6 @@ from reports.config import Config
 
 def run():
     parser = create_arguments()
-    parser.add_argument('--include-cancelled', action='store_true', default=False)
     args = parser.parse_args()
     config = Config.from_namespace(args)
     bids = Bids(config)

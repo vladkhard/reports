@@ -53,6 +53,7 @@ class Invoices(BaseBidsGenerator,
                CSVMixin
                ):
     counter = [0 for _ in range(5)]
+    counter_minus = [0 for _ in range(5)]
     module = 'invoices'
     fields = headers
 
@@ -69,4 +70,26 @@ class Invoices(BaseBidsGenerator,
                       'in {} tender'.format(payment, record['value'],
                                             record['tender'])
                 logger.info(msg)
-                self.counter[i] += 1
+                if self.config.include_cancelled and row.get('cancelled', ''):
+                    self.counter_minus[i] += 1
+                else:
+                    self.counter[i] += 1
+
+    @property
+    def rows(self):
+        for resp in self.response:
+            self.row(resp['value'])
+        rows = [
+            self.config.payments,
+            self.counter,
+            [c * v for c, v in zip(self.counter, self.config.payments)]
+        ]
+        if self.config.include_cancelled:
+            rows += [
+                [],
+                [-x for x in self.config.payments],
+                self.counter_minus,
+                [-(c * v) for c, v in zip(self.counter_minus, self.config.payments)]
+            ]
+        for row in rows:
+            yield row

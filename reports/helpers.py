@@ -48,6 +48,11 @@ def create_arguments():
         default='Europe/Kiev',
         help='Timezone. Default "Europe/Kiev"'
     )
+    report.add_argument(
+        '--include-cancelled',
+        action='store_true',
+        default=False
+    )
     return parser
 
 
