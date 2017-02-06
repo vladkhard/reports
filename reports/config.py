@@ -22,6 +22,9 @@ ARGS = [
 class Config(object):
 
     def __init__(self, config):
+        for key in ARGS:
+            setattr(self, key, '')
+
         if isinstance(config, dict):
             self.config = config
             for key in ARGS:
@@ -30,8 +33,6 @@ class Config(object):
         else:
             with open(config, 'r') as yaml_in:
                 self.config = yaml.load(yaml_in)
-            for key in ARGS:
-                setattr(self, key, '')
         self.module = ''
 
     @classmethod
