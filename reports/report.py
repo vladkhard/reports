@@ -4,11 +4,14 @@ import argparse
 import csv
 import pyminizip
 from datetime import date
+from logging import getLogger
+from logging.config import dictConfig
 from reports.modules import (
     Bids,
     Invoices,
     Tenders,
-    Refunds
+    Refunds,
+    AWSClient
 )
 
 from reports.modules.bids import (
@@ -43,6 +46,7 @@ ARGS = [
     'timezone',
     'include_cancelled'
 ]
+logger = getLogger()
 
 
 class ReportConfig(object):
@@ -56,13 +60,25 @@ class ReportConfig(object):
                              "Please provide one")
         with open(path, 'r') as yaml_in:
             self.config = yaml.load(yaml_in)
+        dictConfig(self.config)
+        self.brokers = self.config.get('brokers', {}).keys() if\
+                            self.config.get('brokers', {}) else []
+        self.emails = self.config.get('brokers') if self.brokers else {}
+        aws = self.config.get('aws')
+        self.ses = aws.get('ses_pass_path')
+        self.s3 = aws.get('s3_pass_path')
+        self.bucket = aws.get('bucket')
+        self.expires = aws.get('expires')
 
-        self.brokers = self.config.get('brokers', {}).keys() if \
-                        self.config.get('brokers', {}) else []
-        self.ses = self.config.get('aws').get('ses_pass_path')
-        self.s3 = self.config.get('aws').get('s3_pass_path')
+        email = self.config.get('email')
+        self.smtp_server = email.get('smtp_server')
+        self.smtp_port = email.get('smtp_port')
+        self.verified_email = email.get('verified_email')
         self.zip = self.config.get('zip_path')
         self.vault = self.config.get('vault')
+        logger.info('Starting generatin {}--{}.'.format(self.start_date, self.end_date))
+        logger.info('Brokers {}'.format(self.brokers))
+        logger.info('Types: {}'.format(self.modules))
 
     def produce_module_config(self, broker):
         config = Config(self.config)
@@ -117,12 +133,19 @@ class Report(object):
     def __init__(self, config):
         self.config = config
         self.vault = Vault(config)
+        self.mod_map = {
+            'bids': Bids,
+            'invoices': Invoices,
+            'tenders': Tenders,
+            'refunds': Refunds,
+        }
+        self.aws = AWSClient(config, vault=self.vault)
 
     def generate_for_broker(self, broker):
         config = self.config.produce_module_config(broker)
         for module in self.config.modules:
             config.module = module
-            op = globals().get(module.title())(config)
+            op = self.mod_map.get(module)(config)
             op.run()
 
     def create_all_bids(self):
@@ -151,7 +174,7 @@ class Report(object):
             4
         )
 
-    def create_tenders_zip(self):
+    def create_tenders_archive(self):
         zname = 'all@{}--{}-tenders-refunds.zip'.format(
             self.config.start_date, self.config.end_date
         )
@@ -163,6 +186,25 @@ class Report(object):
                                            name))
                           for name in ['tenders', 'refunds']
                           for broker in self.config.brokers])
+
+    def create_all_bids_archive(self):
+        zname = 'all@{}--{}-bids.zip'.format(
+            self.config.start_date, self.config.end_date
+        )
+        files = [
+            os.path.join(self.config.work_dir,
+                         'all@{}--{}-bids.csv'.format(self.config.start_date,
+                                                      self.config.end_date))
+        ] + [
+            os.path.join(self.config.work_dir,
+                         '{}@{}--{}-invoices.csv'.format(
+                             broker,
+                             self.config.start_date,
+                             self.config.end_date))
+            for broker in self.config.brokers
+        ]
+
+        self._zip(zname, files, self.vault.broker_password('all'))
 
     def create_brokers_archives(self):
 
@@ -180,12 +222,52 @@ class Report(object):
             password = self.vault.broker_password(broker)
             self._zip(zip_name, files, password=password)
 
+    def upload_files(self):
+        for broker in self.config.brokers:
+            if broker == 'all':
+                files = [
+                    'all@{}--{}-tenders-refunds.zip'.format(
+                        self.config.start_date, self.config.end_date
+                    ),
+                    'all@{}--{}-bids.zip'.format(
+                        self.config.start_date, self.config.end_date
+                    )
+                ]
+            else:
+                files = [
+                    '{}@{}--{}-{}.zip'.format(broker,
+                                              self.config.start_date,
+                                              self.config.end_date,
+                                              '-'.join(self.config.include))
+                ]
+            self.aws.send_files([os.path.join(self.config.work_dir, f) for f in files])
+
+    def clean_up(self):
+        files = [
+            os.path.join(self.config.work_dir,
+                         '{}@{}--{}-{}.csv'.format(broker,
+                                                   self.config.start_date,
+                                                   self.config.end_date,
+                                                   op))
+            for op in self.config.include
+            for broker in self.config.brokers
+        ] + [
+            os.path.join(self.config.work_dir,
+                         'all@{}--{}-bids.csv'.format(self.config.start_date,
+                                                      self.config.end_date))
+        ]
+        map(os.remove, files)
+
     def run(self):
         for broker in self.config.brokers:
             self.generate_for_broker(broker)
         self.create_all_bids()
-        self.create_tenders_zip()
+        self.create_tenders_archive()
         self.create_brokers_archives()
+        self.create_all_bids_archive()
+        self.upload_files()
+        self.aws.send_emails()
+        self.clean_up()
 
 
 def run():

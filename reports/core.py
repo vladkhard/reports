@@ -35,6 +35,10 @@ class BaseUtility(object):
             session=couchdb.Session(retry_delays=range(10))
         )
         ViewDefinition.sync_many(self.adb, views)
+        logger.info('Start {}. Params: {} -> {}--{}'.format(self.module,
+                                                            self.config.broker,
+                                                            self.config.start_date(),
+                                                            self.config.end_date()))
 
     def get_payment(self, value):
         for index, threshold in enumerate(self.config.thresholds):

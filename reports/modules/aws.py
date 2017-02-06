@@ -10,6 +10,7 @@ import logging
 import smtplib
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE
+from email.header import Header
 
 from jinja2 import (
     Environment,
@@ -85,19 +86,19 @@ class AWSClient(object):
         cred = self.vault.ses()
         user = cred.get('AWS_ACCESS_KEY_ID')
         password = cred.get('AWS_SECRET_ACCESS_KEY')
+        import pdb;pdb.set_trace()
         smtpserver = smtplib.SMTP(self.config.smtp_server,
-                                  self.config.smtp_port)
+                                  str(self.config.smtp_port))
 
         smtpserver.ehlo()
         smtpserver.starttls()
         smtpserver.ehlo()
         smtpserver.login(user, password)
-
         try:
             for context in self.links:
                 recipients = self.config.emails[context['broker']]
                 msg = MIMEText(self._render_email(context), 'html', 'utf-8')
-                msg['Subject'] = 'Rialto Billing: {} {} ({})'.format(context['broker'], context['type'], context['period'])
+                msg['Subject'] = Header('Rialto Billing: {} {} ({})'.format(context['broker'], context['type'], context['period']), 'utf-8')
                 msg['From'] = self.config.verified_email
                 if email:
                     msg['To'] = COMMASPACE.join(email)

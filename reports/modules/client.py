@@ -16,10 +16,10 @@ class PassClient(object):
                     in out.split('\n') if item)
 
     def ses_credentials(self, key):
-        self._credentials(key)
+        return self._credentials(key)
 
     def s3_credentials(self, key):
-        self._credentials(key)
+        return self._credentials(key)
 
     def broker_password(self, key):
         return self._output(self.cmd + ' {}'.format(key))
