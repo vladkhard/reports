@@ -97,18 +97,15 @@ class AWSClient(object):
         smtpserver.login(user, password)
         try:
             for context in self.links:
-                recipients = self.config.emails[context['broker']]
+                recipients = self.config.emails[context['broker']] if email is None else email
+                if not isinstance(recipients, list):
+                    recipients = [recipients]
                 msg = MIMEText(self._render_email(context), 'html', 'utf-8')
                 msg['Subject'] = Header('Rialto Billing: {} {} ({})'.format(context['broker'], context['type'], context['period']), 'utf-8')
                 msg['From'] = self.config.verified_email
-                if email:
-                    msg['To'] = COMMASPACE.join(email)
-                    if (not self.config.notify_brokers) or (self.config.notify_brokers and context['broker'] in self.config.notify_brokers):
-                        smtpserver.sendmail(self.verified_email, email,  msg.as_string())
-                else:
-                    msg['To'] = COMMASPACE.join(recipients)
-                    if (not self.config.notify_brokers) or (self.config.notify_brokers and context['broker'] in self.config.notify_brokers):
-                        smtpserver.sendmail(self.config.verified_email, recipients,  msg.as_string())
+                msg['To'] = COMMASPACE.join(recipients)
+                if (not self.config.notify_brokers) or (self.config.notify_brokers and context['broker'] in self.config.notify_brokers):
+                    smtpserver.sendmail(self.config.verified_email, recipients,  msg.as_string())
         finally:
             smtpserver.close()
 
