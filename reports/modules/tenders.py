@@ -51,12 +51,13 @@ class Refunds(BaseTendersGenerator,
               HeadersToRowMixin,
               CSVMixin
               ):
-    counter = [0 for _ in range(5)]
+    
     module = 'refunds'
     fields = headers
 
     def __init__(self, config):
         self.headers = config.headers
+        self.counter = [0 for _ in range(5)]
         BaseTendersGenerator.__init__(self, config)
 
     def row(self, row):
