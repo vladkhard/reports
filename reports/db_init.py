@@ -1,9 +1,14 @@
 from couchdb import Server, Session
 from couchdb.http import Unauthorized, extract_credentials
-from reports.helpers import create_db_url
 import argparse
 import logging
-from ConfigParser import ConfigParser
+import yaml
+from reports.config import (
+    Config
+)
+from reports.helpers import (
+    create_db_url
+)
 from pbkdf2 import PBKDF2
 
 LOGGER = logging.getLogger(__name__)
@@ -27,16 +32,17 @@ VALIDATE_DOC_UPDATE = """function(newDoc, oldDoc, userCtx){
 
 def couchdb_connection(config):
     # CouchDB connection
-    db_name = config.get('db', 'name')
-    db_host = config.get('db', 'host')
-    db_port = config.get('db', 'port')
-    admin_name = config.get('admin', 'username')
-    admin_pass = config.get('admin', 'password')
-    aserver = Server(create_db_url(db_host, db_port, admin_name, admin_pass), session=Session(retry_delays=range(10)))
+    db_config = config.get('db')
+    db_name = db_config['name']
+    aserver = Server(create_db_url(
+        db_config['host'],
+        db_config['port'],
+        db_config['admin']['name'],
+        db_config['admin']['password']), session=Session(retry_delays=range(10)))
     users_db = aserver['_users']
 
-    username = config.get('user', 'username')
-    password = config.get('user', 'password')
+    username = db_config['user']['name']
+    password = db_config['user']['password']
 
     user_doc = users_db.get('org.couchdb.user:{}'.format(username), {'_id': 'org.couchdb.user:{}'.format(username)})
 
@@ -69,18 +75,10 @@ def run():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c')
     args = parser.parse_args()
-
-    config = ConfigParser()
-    config.read(args.c)
-
+    with open(args.c) as in_yaml:
+        config = yaml.load(in_yaml)
     couchdb_connection(config)
 
 
 if __name__ == '__main__':
     run()
-
-
-
-
-
-    
