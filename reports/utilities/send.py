@@ -103,7 +103,7 @@ class AWSClient(object):
             except ClientError as e:
                 print "Error during uploading file {}. Error {}".format(f, e)
 
-    def send_emails(self):
+    def send_emails(self,email=None):
         cred = self._update_credentials(self.ses_cred_path)
         user = cred.get('AWS_ACCESS_KEY_ID')
         password = cred.get('AWS_SECRET_ACCESS_KEY')
@@ -120,9 +120,14 @@ class AWSClient(object):
                 msg = MIMEText(self._render_email(context), 'html', 'utf-8')
                 msg['Subject'] = 'Prozorro Billing: {} {} ({})'.format(context['broker'], context['type'], context['period'])
                 msg['From'] = self.verified_email
-                msg['To'] = COMMASPACE.join(recipients)
-                if (not self.brokers) or (self.brokers and context['broker'] in self.brokers):
-                    smtpserver.sendmail(self.verified_email, recipients,  msg.as_string())
+                if email:
+                    msg['To'] = COMMASPACE.join(email)
+                    if (not self.brokers) or (self.brokers and context['broker'] in self.brokers):
+                        smtpserver.sendmail(self.verified_email, email,  msg.as_string())
+                else:
+                    msg['To'] = COMMASPACE.join(recipients)
+                    if (not self.brokers) or (self.brokers and context['broker'] in self.brokers):
+                        smtpserver.sendmail(self.verified_email, recipients,  msg.as_string())
         finally:
             smtpserver.close()
 
@@ -163,8 +168,11 @@ def run():
     for broker in client.links:
         if (not client.brokers) or (client.brokers and broker['broker'] in client.brokers):
             print "Url for {} ==> {}\n".format(broker['broker'], broker['link'])
-    if args.notify:
-        client.send_emails()
+    if args.test:
+        client.send_emails(email)
+    else:
+        if args.notify:
+            client.send_emails()
 
 
 if __name__ == '__main__':

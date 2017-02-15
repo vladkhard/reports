@@ -39,8 +39,7 @@ test_data = {
         'kind': 'general',
     },
 
-}
-
+}         
 
 class MockCurrencyResponce(object):
     text = u'''[
@@ -66,7 +65,7 @@ def get_mock_parser():
     type(mock_parse.return_value).kind = mock.PropertyMock(
         return_value=['kind', 'general'])
     type(mock_parse.return_value).status = mock.PropertyMock(
-            return_value={'action': '', 'statuses': ['complete', 'active']})
+        return_value={'action': '', 'statuses': ['complete', 'active']})
 
     return mock_parse
 

@@ -47,6 +47,7 @@ class BidsUtility(BaseBidsUtility):
             if row:
                 yield row
 
+
 def run():
     utility = BidsUtility()
     utility.run()

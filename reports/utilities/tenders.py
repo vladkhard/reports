@@ -1,3 +1,4 @@
+
 from reports.core import BaseTendersUtility
 from reports.helpers import (
     value_currency_normalize
@@ -52,9 +53,9 @@ class TendersUtility(BaseTendersUtility):
             self.Logger.info(msg)
         r = str(rate) if rate else ''
         row.append(r)
-        row.append(self.get_payment(value, record.get('startdate', '') > self.threshold_date))
+        row.append(self.get_payment(value))
         self.Logger.info(
-            "Refund {} for tender {} with value {}".format(
+            "Bill {} for tender {} with value {}".format(
                 row[-1], row[0], value
             )
         )
