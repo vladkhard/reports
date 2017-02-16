@@ -1,0 +1,81 @@
+db:
+   host: ${parts['couchdb.ini'].host}
+   port: ${parts['couchdb.ini'].port}
+   name: ${options['db_name']}
+   admin:
+      name: ${options['admin_name']}
+      password: ${options['admin_password']}
+
+   user:
+      name: ${options['user_name']}
+      password: ${options['user_password']} 
+
+payments:
+   thresholds:
+      - 20000
+      - 50000
+      - 200000
+      - 1000000
+   cdb:
+      - 5
+      - 25
+      - 80
+      - 110
+      - 400
+   emall:
+      - 3
+      - 15
+      - 40
+      - 60
+      - 300
+
+out:
+   out_dir: ${parts.buildout.directory}/var/reports
+   work_dir: ${parts.buildout.directory}
+
+api:
+   host: ${options['api_host']}
+   version: ${options['api_ver']}
+vault: ${options['vault']}
+aws:
+   bucket: ${options['bucket']}
+   expires: ${options['expires']}
+   s3_pass_path: ${options['s3_pass_path']}
+   ses_pass_path: ${options['ses_pass_path']}
+
+email:
+   smtp_server: ${options['smtp_server']}
+   smtp_port: ${options['smtp_port']}
+   verified_email: ${options['verified_email']}
+zip_path: ${options['zip_path']}
+${options['emails']}
+
+version: 1
+formatters:
+    simpleFormater:
+        format: '%(asctime)s - %(levelname)s: %(message)s'
+        datefmt: '%Y/%m/%d %H:%M:%S'
+
+handlers:
+    console:
+        class: logging.StreamHandler
+        formatter: simpleFormater
+        level: DEBUG
+        stream: ext://sys.stdout
+    file:
+        class : logging.FileHandler
+        formatter: simpleFormater
+        level: WARNING
+        filename: ${parts.buildout.directory}/var/log/reports.log
+
+loggers:
+    clogger:
+        level: DEBUG
+        handlers: [console]
+    flogger:
+        level: WARNING
+        handlers: [file]
+
+root:
+    level: DEBUG
+handlers: [console, file]
