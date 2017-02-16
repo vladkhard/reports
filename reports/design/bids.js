@@ -10,27 +10,6 @@ function(doc) {
         });
     };
 
-    function find_matched_revs(revisions, pattern) {
-      return revisions.filter(function(rev) {
-          var changes = rev['changes'].filter(function(change) {
-             return (change['path'].indexOf(pattern) !== -1);
-          });
-          return (changes.length !== 0);
-      });
-    }
-
-    function find_initial_bid_date(revisions, bid_index, bid_id) {
-      var revs = find_matched_revs(revisions, '/bids/' + bid_index);
-      if (typeof revs === 'undefined' || revs.length === 0) {
-          var revs = find_matched_revs(revisions, '/bids');
-      }
-
-      if (typeof revs === 'undefined' || revs.length === 0) {
-        return '';
-      }
-      return revs[0]['date'] || '';
-    }
-
     function filter_bids(bids) {
         var min_date =  Date.parse("2016-04-01T00:00:00+03:00");
         return bids.filter(function(bid) {
@@ -304,7 +283,7 @@ function(doc) {
     };
 
     var emitter = {
-        lot: function(owner, date, bid, lot, audits, init_date) {
+        lot: function(owner, date, bid, lot, audits) {
             emit([owner, date, bid.id, lot.id], {
                 tender: id,
                 lot: lot.id,
@@ -314,11 +293,10 @@ function(doc) {
                 startdate: startDate,
                 audits: audits,
                 tender_start_date: tender_start_date,
-                tenderID: tenderID,
-                initialDate: init_date
+                tenderID: tenderID
             });
         },
-        tender: function(owner, date, bid, tender, audits, init_date){
+        tender: function(owner, date, bid, tender, audits){
             emit([owner, date, bid.id], {
                 tender: id,
                 value: tender.value.amount,
@@ -327,8 +305,7 @@ function(doc) {
                 audits: audits,
                 startdate: startDate,
                 tender_start_date: tender_start_date,
-                tenderID: tenderID,
-                initialDate: init_date
+                tenderID: tenderID
             });
         }
     };
@@ -339,13 +316,12 @@ function(doc) {
         if ("bids" in tender) {
             if(is_multilot) {
                 (bids || []).forEach(function(bid) {
-                    var init_date = find_initial_bid_date(tender.revisions || [], tender.bids.indexOf(bid), bid.id);
                     bid.lotValues.forEach(function(value) {
                         tender.lots.forEach(function(lot) {
                             if (check_lot(tender, lot)) {
                                 if (value.relatedLot === lot.id) {
                                     var audits = (tender.documents || []).filter(function(tender_doc) {
-                                        return tender_doc.title.indexOf("audit_" + tender.id + "_" + lot.id) !== -1;
+                                        return tender_doc.title.indexOf("audit_" + id + "_" + lot.id) === 0;
                                     });
                                     var audit = '';
                                     if (audits.length > 1) {
@@ -355,7 +331,7 @@ function(doc) {
                                     } else {
                                         audit = audits[0] || null; 
                                     }
-                                    emitter.lot(bid.owner, date_normalize(bids_disclojure_date), bid, lot, audit, init_date);
+                                    emitter.lot(bid.owner, date_normalize(bids_disclojure_date), bid, lot, audit);
                                 }
                             }
                         });
@@ -375,8 +351,7 @@ function(doc) {
                     audit = audits[0] || null; 
                 }
                 (bids || []).forEach(function(bid) {
-                    var init_date = find_initial_bid_date(tender.revisions, tender.bids.indexOf(bid), bid.id);
-                    emitter.tender(bid.owner, date_normalize(bids_disclojure_date), bid, tender, audit, init_date);
+                    emitter.tender(bid.owner, date_normalize(bids_disclojure_date), bid, tender, audit);
                 });
             }
 

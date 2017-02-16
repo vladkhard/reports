@@ -408,4 +408,3 @@ function(doc) {
 
     find_tender_data(doc);
 }// end function
-

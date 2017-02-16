@@ -18,14 +18,12 @@ test_bids_invalid = [
     [{
         "owner": "test",
         "status": "invalid",
-
         "date": "2016-03-17T13:32:25.774673+02:00",
         "id": "44931d9653034837baff087cfc2fb5ac",
     }],
     [{
         "status": "invalid",
         "owner": "test",
-
         "date": "2016-04-17T13:32:25.774673+02:00",
         "id": "44931d9653034837baff087cfc2fb5ac"
     }]
@@ -35,35 +33,30 @@ test_bids_valid = [
     [{
         "owner": "test",
         "status": "active",
-
         "date": "2016-04-17T13:32:25.774673+02:00",
         "id": "44931d9653034837baff087cfc2fb5ac",
     }],
     [{
         "owner": "test",
         "status": "active",
-
         "date": "2016-05-05T13:32:25.774673+02:00",
         "id": "44931d9653034837baff087cfc2fb5ac",
     }],
     [{
         "status": "active",
         "owner": "test",
-
         "date": "2016-05-10T13:32:25.774673+02:00",
         "id": "f55962b1374b43ddb886821c0582bc7f"
     }],
     [{
         "status": "active",
         "owner": "test",
-
         "date": "2016-05-10T13:32:25.774673+02:00",
         "id": "f55962b1374b43ddb886821c0582bc7f"
     },
     {
         "status": "active",
         "owner": "test1",
-
         "date": "2016-05-10T13:42:25.774673+02:00",
         "id": "f55962b1374b83ddb886821c0582bc7f"
     }
@@ -80,7 +73,6 @@ test_lots = [{
             }]
 
 test_bids = [{
-
                 "date": "2016-04-07T16:36:58.983102+03:00",
                 "owner": "test",
                 "status": "active",
@@ -88,7 +80,6 @@ test_bids = [{
                 "lotValues": [
                     {
                         "relatedLot": "324d7b2dd7a54df29bad6d0b7c91b2e9",
-
                         "date": "2016-04-07T16:36:58.983062+03:00",
                     }
                 ],
@@ -96,7 +87,6 @@ test_bids = [{
 
 test_2_bids = [
             {
-
                 "date": "2016-04-07T16:36:58.983102+03:00",
                 "owner": "test",
                 "status": "active",
@@ -104,13 +94,11 @@ test_2_bids = [
                 "lotValues": [
                     {
                         "relatedLot": "324d7b2dd7a54df29bad6d0b7c91b2e9",
-
                         "date": "2016-04-07T16:36:58.983062+03:00",
                     }
                 ],
             },
             {
-
                 "date": "2016-04-07T16:46:58.983102+03:00",
                 "owner": "te3st",
                 "status": "active",
@@ -118,13 +106,11 @@ test_2_bids = [
                 "lotValues": [
                     {
                         "relatedLot": "324d7b2dd7a54df29bad6d0b7c91b2e9",
-
                         "date": "2016-04-07T16:36:58.983062+03:00",
                     }
                 ],
             }
         ]
-
 
 test_award_period = '2016-04-17T13:32:25.774673+02:00'
 
@@ -207,7 +193,6 @@ def test_bids_view_EUprocurement_type_valid_data(db, ut):
             "startDate": test_award_period,
         },
         "qualificationPeriod":{
-
             "startDate": "2016-11-13T15:15:00+02:00"
         },
         'owner': 'teser',
@@ -223,7 +208,6 @@ def test_bids_view_procurement_typeEU_without_qualifications(db, ut):
             "startDate": test_award_period,
         },
         "qualificationPeriod":{
-
             "startDate": "2016-11-13T15:15:00+02:00"
         },
         'owner': 'teser',
@@ -245,7 +229,6 @@ def test_bids_view_have_no_disclojure_date(db, ut):
 
 def test_bids_view_compet_dialog_stage2_fail_check(db, ut):
     # if (['competitiveDialogueEU.stage2', 'competitiveDialogueUA.stage2'].indexOf(doc.procurementMethodType) !== -1) {
-
     # log('Skipping tender stage2 ' + doc._id)        return;    }
     data = {
         "procurementMethodType": "competitiveDialogueEU.stage2",
@@ -286,7 +269,6 @@ def test_bids_view_cancelled_tender_invalid_time(db, ut):
         "status": "cancelled",
         "cancellations":[{
                         "cancellationOf": "tender",
-
                         "date": "2016-11-13T15:10:00+02:00",
                         "status": "active"
                     },{
@@ -298,7 +280,6 @@ def test_bids_view_cancelled_tender_invalid_time(db, ut):
             "startDate": test_award_period,
         },
         "qualificationPeriod": {
-
                     "startDate": "2016-11-13T15:15:00+02:00",
                 },
         'owner': 'teser',
@@ -309,7 +290,6 @@ def test_bids_view_cancelled_tender_invalid_time(db, ut):
 def test_bids_view_cancelled_tender_before_award(db, ut):
     # ((new Date(tender.date)) < (new Date(bids_disclojure_date))) == True
     data = {
-
         "date": "2016-10-31T19:00:00+03:00",
         "status": "cancelled",
         "cancellations":[{
@@ -328,7 +308,6 @@ def test_bids_view_cancelled_tender_before_award(db, ut):
 def test_bids_view_cancelled_tender_after_award(db, ut):
     # ((new Date(tender.date)) < (new Date(bids_disclojure_date))) == False
     data = {
-
         "date": "2016-11-25T19:00:00+03:00",
         "status": "cancelled",
         "cancellations":[{
@@ -349,7 +328,6 @@ def test_bids_view_cancelled_tender_without_cancellations(db, ut):
     data = {
         "status": "cancelled",
         "awardPeriod": {
-
             "startDate": '2016-11-17T13:32:25.774673+02:00',
         },
         'owner': 'teser',
@@ -363,7 +341,6 @@ def test_bids_view_cancelled_tender_few_tenders_before_disclojure_date(db, ut):
         "status": "cancelled",
         "cancellations":[{
                         "cancellationOf": "tender",
-
                         "date": "2016-11-13T15:10:00+02:00",
                         "status": "active"
                     }],
@@ -381,7 +358,6 @@ def test_bids_view_cancelled_few_tenders_after_disclojure_date(db, ut):
         "status": "cancelled",
         "cancellations":[{
                         "cancellationOf": "tender",
-
                         "date": "2016-11-13T15:10:00+02:00",
                         "status": "active"
                     }],
@@ -401,7 +377,6 @@ def test_bids_view_check_tender_bids_UA(db, ut):
         "numberOfBids": 1,
         "cancellations":[{
                         "cancellationOf": "tender",
-
                         "date": "2016-11-13T15:17:00+02:00",
                         "status": "active"
                     }],
@@ -420,7 +395,6 @@ def test_bids_view_check_tender_bids_EU(db, ut):
         "procurementMethodType": "aboveThresholdEU",
         "cancellations":[{
                         "cancellationOf": "tender",
-
                         "date": "2016-11-13T15:17:00+02:00",
                         "status": "active"
                     }],
@@ -435,7 +409,6 @@ def test_bids_view_check_tender_bids_EU(db, ut):
             "startDate": test_award_period,
         },
         "qualificationPeriod":{
-
             "startDate": "2016-11-13T15:15:00+02:00"
         },
         'owner': 'teser',
@@ -452,7 +425,6 @@ def test_bids_view_check_tender_bids_UA_defense(db, ut):
         "procurementMethodType": "aboveThresholdUA.defense",
         "cancellations":[{
                         "cancellationOf": "tender",
-
                         "date": "2016-11-13T15:17:00+02:00",
                         "status": "active"
                     }],
@@ -472,7 +444,6 @@ def test_bids_view_check_tender_bids_UA_defense_0_bids(db, ut):
         "procurementMethodType": "aboveThresholdUA.defense",
         "cancellations":[{
                         "cancellationOf": "tender",
-
                         "date": "2016-11-13T15:17:00+02:00",
                         "status": "active"
                     }],
@@ -491,7 +462,6 @@ def test_bids_view_check_tender_bids_CD_EU(db, ut):
         "procurementMethodType": "competitiveDialogueEU",
         "cancellations":[{
                         "cancellationOf": "tender",
-
                         "date": "2016-11-13T15:17:00+02:00",
                         "status": "active"
                     }],
@@ -509,7 +479,6 @@ def test_bids_view_check_tender_bids_CD_EU(db, ut):
             "startDate": test_award_period,
         },
         "qualificationPeriod":{
-
             "startDate": "2016-11-13T15:15:00+02:00"
         },
         'owner': 'teser',
@@ -524,7 +493,6 @@ def test_bids_view_check_tender_bids_CD_EU_two_qual(db, ut):
         "procurementMethodType": "competitiveDialogueEU",
         "cancellations":[{
                         "cancellationOf": "tender",
-
                         "date": "2016-11-13T15:17:00+02:00",
                         "status": "active"
                     }],
@@ -539,7 +507,6 @@ def test_bids_view_check_tender_bids_CD_EU_two_qual(db, ut):
             "startDate": test_award_period,
         },
         "qualificationPeriod":{
-
             "startDate": "2016-11-13T15:15:00+02:00"
         },
         'owner': 'teser',
@@ -566,7 +533,6 @@ def test_bids_view_check_tender_unsuccesfull(db, ut):
             "startDate": test_award_period,
         },
         "qualificationPeriod":{
-
             "startDate": "2016-11-13T15:15:00+02:00"
         },
         'owner': 'teser',
@@ -590,7 +556,6 @@ def test_bids_view_check_tender_unsuccesfull_invalid(db, ut):
             "startDate": test_award_period,
         },
         "qualificationPeriod":{
-
             "startDate": "2016-11-13T15:15:00+02:00"
         },
         'owner': 'teser',
@@ -623,7 +588,6 @@ def test_bids_view_check_cancelled_lot_with_date_fail(db, ut):
         "lots": [
             {
                 "status": "cancelled",
-
                 "date": "2016-04-07T16:36:58.983102+03:00",
                 "id": "324d7b2dd7a54df29bad6d0b7c91b2e9",
                 "value": {
@@ -649,7 +613,6 @@ def test_bids_view_check_cancelled_lot_with_date_pass(db, ut):
         "lots": [
             {
                 "status": "cancelled",
-
                 "date": "2016-04-27T16:36:58.983102+03:00",
                 "id": "324d7b2dd7a54df29bad6d0b7c91b2e9",
                 "value": {
@@ -687,7 +650,6 @@ def test_bids_view_check_cancelled_lot_1_cancellation_fail(db, ut):
     data = {
         "procurementMethodType": "belowThreshold",
         "awardPeriod": {
-
             "startDate": "2016-12-13T15:10:00+02:00",
         },
         "cancellations":[{
@@ -711,7 +673,6 @@ def test_bids_view_check_cancelled_lot_1_cancellation(db, ut):
         },
         "cancellations":[{
                         "cancellationOf": "lot",
-
                         "date": "2016-12-13T15:10:00+02:00",
                         "status": "active",
                        "relatedLot": "324d7b2dd7a54df29bad6d0b7c91b2e9",
@@ -728,19 +689,16 @@ def test_bids_view_check_cancelled_lot_2_cancellations_fail(db, ut):
     data = {
         "procurementMethodType": "belowThreshold",
         "awardPeriod": {
-
             "startDate": "2016-12-13T15:10:00+02:00",
         },
         "cancellations":[{
                         "cancellationOf": "lot",
                         "status": "active",
-
                         "date": "2016-11-13T15:10:00+02:00",
                         "relatedLot": "324d7b2dd7a54df29bad6d0b7c91b2e9",
                     },{
                         "cancellationOf": "lot",
                         "status": "active",
-
                         "date": "2016-11-13T15:10:00+02:00",
                         "relatedLot": "324d7b2dd7a54df29bad6d0b7c91b2e9",
                     }],
@@ -755,19 +713,16 @@ def test_bids_view_check_cancelled_lot_2_cancellations(db, ut):
     data = {
         "procurementMethodType": "belowThreshold",
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
         },
         "cancellations":[{
                         "cancellationOf": "lot",
                         "status": "active",
-
                         "date": "2016-11-13T15:20:00+02:00",
                         "relatedLot": "324d7b2dd7a54df29bad6d0b7c91b2e9",
                     },{
                         "cancellationOf": "lot",
                         "status": "active",
-
                         "date": "2016-11-13T15:20:00+02:00",
                         "relatedLot": "324d7b2dd7a54df29bad6d0b7c91b2e9",
                     }],
@@ -792,7 +747,6 @@ def test_bids_view_check_unsuccessfull(db, ut):
     data = {
         "procurementMethodType": "belowThreshold",
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
         },
         "lots": [
@@ -816,7 +770,6 @@ def test_bids_view_check_unsuccessfull_fail(db, ut):
     data = {
         "procurementMethodType": "aboveThresholdUA.defense",
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
         },
         "lots": [
@@ -840,7 +793,6 @@ def test_bids_view_check_lot_bids_unsuccessfull_UA(db, ut):
     data = {
         "procurementMethodType": "aboveThresholdUA",
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
         },
         "lots": [
@@ -864,7 +816,6 @@ def test_bids_view_check_lot_bids_unsuccessfull_UA_fail(db, ut):
     data = {
         "procurementMethodType": "aboveThresholdUA",
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
         },
         "lots": [
@@ -898,7 +849,6 @@ def test_bids_view_check_lot_bids_unsuccessfull_EU(db, ut):
         }
         ],
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
         },
         "qualificationPeriod":{
@@ -932,7 +882,6 @@ def test_bids_view_check_lot_bids_unsuccessfull_EU_1_qual_fail(db, ut):
         }
         ],
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
         },
         "qualificationPeriod":{
@@ -959,7 +908,6 @@ def test_bids_view_check_lot_bids_unsuccessfull_UAdef(db, ut):
     data = {
         "procurementMethodType": "aboveThresholdUA.defense",
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
         },
         "lots": [
@@ -983,7 +931,6 @@ def test_bids_view_check_lot_bids_unsuccessfull_UA_def_fail(db, ut):
     data = {
         "procurementMethodType": "aboveThresholdUA.defense",
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
         },
         "lots": [
@@ -1007,7 +954,6 @@ def test_bids_view_check_lot_bids_unsuccessfull_UA_def_with_award_and_1_bid(db, 
     data = {
         "procurementMethodType": "aboveThresholdUA.defense",
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
         },
         "awards": [
@@ -1020,7 +966,6 @@ def test_bids_view_check_lot_bids_unsuccessfull_UA_def_with_award_and_1_bid(db, 
                    "amount": 2000,
                    "valueAddedTaxIncluded": True
                },
-
                "date": "2016-11-13T15:15:00+02:00",
                "id": "da6b3f912070460ca082b969a2f91e5d"
             }
@@ -1059,7 +1004,6 @@ def test_bids_view_check_lot_bids_unsuccessfull_competitiveDialogueEU(db, ut):
             "lotID": "324d7b2dd7a54df29bad6d0b7c91b2e9"
         }],
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
         },
         "qualificationPeriod":{
@@ -1096,7 +1040,6 @@ def test_bids_view_check_lot_bids_unsuccessfull_competitiveDialogueEU_fail_with_
         }
         ],
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
         },
         "qualificationPeriod":{
@@ -1204,7 +1147,6 @@ def test_bids_view_check_audit_2_documents_dateModified_check(db, ut):
     response = list(ut.response)
     assert response[0]['value']['audits']['datePublished'] == "2016-06-01T12:18:40.193283+03:00"
 
-
 def test_bids_view_check_audit_2_documents_dateModified_check_without_lots(db, ut):
     # if(is_multilot) == False
     # if (audits.length > 1) == True
@@ -1212,30 +1154,24 @@ def test_bids_view_check_audit_2_documents_dateModified_check_without_lots(db, u
         "status": "unsuccessful",
         "procurementMethodType": "belowThreshold",
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
             "endDate": "2016-12-30T15:15:00+02:00",
-
         },
         "documents":[   
             {
                "format": "text/plain",
                "title": "audit_0006651836f34bcda9a030c0bf3c0e6e_324d7b2dd7a54df29bad6d0b7c91b2e9.yaml",
                "documentOf": "tender",
-
                "datePublished": "2016-06-01T12:17:40.193283+03:00",
                "dateModified": "2016-06-01T12:26:40.193305+03:00",
-
                "id": "412e55ba06e847749c24b774fc75b805"
             },
             {
                "format": "text/plain",
                "title": "audit_0006651836f34bcda9a030c0bf3c0e6e_324d7b2dd7a54df29bad6d0b7c91b2e9.yaml",
                "documentOf": "tender",
-
                "datePublished": "2016-06-01T12:18:40.193283+03:00",
                "dateModified": "2016-06-01T12:19:40.193305+03:00",
-
                "id": "412e55ba06e847749c24b774fc75b805"
             }
         ],
@@ -1247,7 +1183,6 @@ def test_bids_view_check_audit_2_documents_dateModified_check_without_lots(db, u
     ut.get_response()
     ut.response = list(ut.response)
     response = list(ut.response)
-
     assert response[0]['value']['audits']['datePublished'] == "2016-06-01T12:18:40.193283+03:00"
     
 def test_bids_view_check_audit_1_document_dateModified_check_without_lots(db, ut):
@@ -1257,7 +1192,6 @@ def test_bids_view_check_audit_1_document_dateModified_check_without_lots(db, ut
         "status": "unsuccessful",
         "procurementMethodType": "belowThreshold",
         "awardPeriod": {
-
             "startDate": "2016-11-13T15:15:00+02:00",
         },
         "documents":[
@@ -1265,7 +1199,6 @@ def test_bids_view_check_audit_1_document_dateModified_check_without_lots(db, ut
                "format": "text/plain",
                "title": "audit_0006651836f34bcda9a030c0bf3c0e6e_324d7b2dd7a54df29bad6d0b7c91b2e9.yaml",
                "documentOf": "tender",
-
                "datePublished": "2016-06-01T12:18:40.193283+03:00",
                "dateModified": "2016-06-01T12:19:40.193305+03:00",
                "id": "412e55ba06e847749c24b774fc75b805"
@@ -1315,7 +1248,6 @@ def test_bids_view_period(db, ut):
     data = {
         "_id": "10028cddd23540e5b6abb9efd2756d1d",
         "awardPeriod": {
-
             "startDate": "2016-11-09T15:00:00+02:00",
         },
         'owner': 'teser',
@@ -1360,7 +1292,6 @@ def test_bids_view_period_edge_limit_check(db, ut):
     data = {
         "_id": "10028cddd23540e5b6abb9efd2756de1",
         "awardPeriod": {
-
             "startDate": "2016-11-01T17:01:00+02:00",
         },
         'owner': 'teser',
@@ -1372,7 +1303,6 @@ def test_bids_view_period_edge_limit_check(db, ut):
     data = {
         "_id": "10028cddd23540e3b6abb9efd2756de2",
         "awardPeriod": {
-
             "startDate": "2016-11-01T17:00:00+02:00",
         },
         'owner': 'teser',
@@ -1384,7 +1314,6 @@ def test_bids_view_period_edge_limit_check(db, ut):
     data = {
         "_id": "10028cddd23540e3b60bb9efd2756de3",
         "awardPeriod": {
-
             "startDate": "2016-11-01T16:59:00+02:00",
         },
         'owner': 'teser',
@@ -1397,7 +1326,6 @@ def test_bids_view_period_edge_limit_check(db, ut):
     data = {
         "_id": "10028cddd23520e3b6abb9efd2756de4",
         "awardPeriod": {
-
             "startDate": "2016-12-01T17:00:00+02:00",
         },
         'owner': 'teser',
@@ -1410,7 +1338,6 @@ def test_bids_view_period_edge_limit_check(db, ut):
     data = {
         "_id": "10028cddd23540e3b50bb9efd2756de5",
         "awardPeriod": {
-
             "startDate": "2016-12-01T16:59:00+02:00",
         },
         'owner': 'teser',
@@ -1422,7 +1349,6 @@ def test_bids_view_period_edge_limit_check(db, ut):
     data = {
         "_id": "00028aasd2isdfsde5b6abb9efd2756de6",
         "awardPeriod": {
-
             "startDate": "2016-12-01T17:01:00+02:00",
         },
         'owner': 'teser',
@@ -1434,7 +1360,6 @@ def test_bids_view_period_edge_limit_check(db, ut):
     data = {
         "_id": "00028aasd2isdfsde5b6abb9efd2756de7",
         "awardPeriod": {
-
             "startDate": "2016-11-30T17:01:00+02:00",
         },
         'owner': 'teser',
@@ -1453,7 +1378,6 @@ def test_bids_view_period_edge_limit_check(db, ut):
 def test_bids_view_with_lots(db, ut):
     data = {
         "enquiryPeriod": {
-
             "startDate": '2016-04-17T13:32:25.774673+02:00',
         },
         "awardPeriod": {
@@ -1480,7 +1404,6 @@ def test_bids_utility_output(db, ut):
         'awardPeriod': {'startDate': test_award_period },
         'bids': test_bids_valid[0],
         "enquiryPeriod": {
-
             "startDate": '2016-04-17T13:32:25.774673+02:00',
         }
     }
@@ -1496,7 +1419,6 @@ def test_bids_utility_output(db, ut):
 def test_bids_utility_output_with_lots(db, ut):
     data = {
         "enquiryPeriod": {
-
             "startDate": '2016-04-17T13:32:25.774673+02:00',
         },
         "awardPeriod": {
@@ -1516,7 +1438,6 @@ def test_bids_utility_output_with_lots(db, ut):
         ],
         "bids": [
             {
-
                 "date": "2016-04-07T16:36:58.983102+03:00",
                 "status": "active",
                 "owner": "test",
@@ -1524,7 +1445,6 @@ def test_bids_utility_output_with_lots(db, ut):
                 "lotValues": [
                     {
                         "relatedLot": "324d7b2dd7a54df29bad6d0b7c91b2e9",
-
                         "date": "2016-04-07T16:36:58.983062+03:00",
                     }
                 ],
