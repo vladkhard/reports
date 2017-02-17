@@ -31,7 +31,7 @@ class AWSClient(object):
         self.vault = vault if vault is not None else Vault(config)
         self.config = config
         self.template_env = Environment(
-                loader=PackageLoader('reports', 'templates')
+            loader=PackageLoader('reports', 'templates')
         )
         self.links = []
         self.brokers = []
@@ -105,6 +105,7 @@ class AWSClient(object):
                 msg['From'] = self.config.verified_email
                 msg['To'] = COMMASPACE.join(recipients)
                 if (not self.config.notify_brokers) or (self.config.notify_brokers and context['broker'] in self.config.notify_brokers):
+                    logger.info("Sending email to {}".format(recipients))
                     smtpserver.sendmail(self.config.verified_email, recipients,  msg.as_string())
         finally:
             smtpserver.close()
