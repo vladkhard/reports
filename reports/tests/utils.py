@@ -5,7 +5,10 @@ import pytest
 import couchdb
 from copy import copy
 from reports.config import Config
+from reports.helpers import create_db_url
 
+
+test_config = os.path.join(os.path.dirname(__file__), 'tests.yaml')
 test_data = {
     "procurementMethod": "open",
     "status": "complete",
@@ -38,8 +41,8 @@ test_data = {
     "procuringEntity": {
         'kind': 'general',
     },
+}
 
-}         
 
 class MockCurrencyResponce(object):
     text = u'''[
@@ -50,8 +53,6 @@ class MockCurrencyResponce(object):
      {"r030":840,"txt":"Долар США",
      "rate":2,"cc":"USD","exchangedate":"16.05.2016"}]
     '''
-
-test_config = os.path.join(os.path.dirname(__file__), 'tests.ini')
 
 
 def get_mock_parser():
@@ -69,6 +70,7 @@ def get_mock_parser():
 
     return mock_parse
 
+
 def assert_csv(csv, name , headers, rows):
     csv.assert_called_once_with(name, 'w')
     handler = csv()
@@ -80,29 +82,27 @@ def assert_csv(csv, name , headers, rows):
             ','.join([str(i) for i in row]), '\r\n'
         ))
 
-def assertLen(count, data, utility):  
+
+def assertLen(count, data, utility):
+    ll = []  
     doc = copy(test_data)
     doc.update(data)
     utility.db.save(doc)
-    utility.get_response()
-    utility.response = list(utility.response)
-    assert count == len(utility.response)
+    utility.response
+    for x in utility.response:
+        ll.append(x)
+    assert count == len(ll)
+
 
 @pytest.fixture(scope='function')
 def db(request):
     conf = Config(test_config)
-    host = conf.get_option('db', 'host')
-    port = conf.get_option('db', 'port')
-    user = conf.get_option('user', 'username')
-    passwd = conf.get_option('user', 'password')
+    host = conf.config['db']['host']
+    port = conf.config['db']['port']
+    user = conf.config['db']['admin']['name']
+    passwd = conf.config['db']['admin']['password']
 
-    db_name = conf.get_option('db', 'name')
-    def create_db_url(host, port, user, passwd):
-        up = ''
-        if user and passwd:
-            up = '{}:{}@'.format(user, passwd)
-        url = 'http://{}{}:{}'.format(up, host, port)
-        return url
+    db_name = conf.config['db']['name']
     server = couchdb.Server(
         create_db_url(host, port, user, passwd)
     )

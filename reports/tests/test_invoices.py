@@ -4,14 +4,14 @@ import couchdb
 import os.path
 from reports.config import Config
 from copy import copy
-from reports.utilities.invoices import InvoicesUtility
+from reports.modules.bids import Invoices
 from reports.tests.utils import(
     get_mock_parser,
     test_data,
     assert_csv,
     db
 )
-
+test_config = os.path.join(os.path.dirname(__file__), 'tests.yaml')
 test_bids_valid = [
     [{
         "owner": "test",
@@ -36,12 +36,11 @@ test_bids_valid = [
 test_award_period = '2016-04-17T13:32:25.774673+02:00'
 
 @pytest.fixture(scope='function')
-def ut(request):    
-    mock_parse = get_mock_parser()
-    with mock.patch('argparse.ArgumentParser.parse_args', mock_parse):
-        utility = InvoicesUtility()
-    ut.counter = [0 for _ in utility.config.payments]
-    return utility
+def ut(request):
+    config = Config(test_config)
+    config.broker = 'test'
+    bids = Invoices(config)
+    return bids
 
 def test_invoices_utility_output(db, ut):
     data = {

@@ -3,7 +3,7 @@ import couchdb
 import mock
 import os.path
 from reports.config import Config
-from reports.utilities.refunds import RefundsUtility
+from reports.modules.tenders import Refunds
 from copy import copy
 from reports.tests.utils import(
     get_mock_parser,
@@ -11,7 +11,7 @@ from reports.tests.utils import(
     assert_csv,
     db
 )
-
+test_config = os.path.join(os.path.dirname(__file__), 'tests.yaml')
 test_bids = [
                     {
                         "date": "2016-04-07T16:36:58.983102+03:00",
@@ -41,13 +41,11 @@ test_lots = [
 
 @pytest.fixture(scope='function')
 def ut(request):
-    mock_parse = get_mock_parser()
-    type(mock_parse.return_value).kind = mock.PropertyMock(
-        return_value=['general'])
-    with mock.patch('argparse.ArgumentParser.parse_args', mock_parse):
-        utility = RefundsUtility()
-    ut.counter = [0 for _ in utility.config.payments]
-    return utility
+    config = Config(test_config)
+    config.broker = 'test'
+    config.kind = 'general'
+    bids = Refunds(config)
+    return bids
 
 def test_refunds_utility_output(db, ut):
     data = { "awardPeriod": {

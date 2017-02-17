@@ -129,4 +129,4 @@ class AWSClient(object):
                 self.links.append(entry)
         except Exception as e:
             logger.fatal("Error: {}".format(e))
-self.not_notify = True
+            self.not_notify = True

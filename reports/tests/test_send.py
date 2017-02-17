@@ -4,6 +4,7 @@ import os
 import pytest
 import mock
 import boto3
+import yaml
 from mock import Mock, MagicMock
 from mock import patch
 import errno
@@ -15,9 +16,12 @@ from email.utils import COMMASPACE
 from reports.utilities.send import AWSClient
 from mock import Mock, MagicMock
 
+with open("reports/tests/tests.yaml", 'r') as ymlfile:
+    cfg = yaml.load(ymlfile)
+
 @pytest.fixture(scope='function')
 def client():
-    aws_client = AWSClient(test_config)
+    aws_client = AWSClient(cfg)
     aws_client._update_credentials = MagicMock(return_value={'AWS_ACCESS_KEY_ID':'user', 'AWS_SECRET_ACCESS_KEY': 'pass'})
     return aws_client
 

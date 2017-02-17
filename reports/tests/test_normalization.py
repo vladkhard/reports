@@ -21,4 +21,3 @@ def test_value_normalization():
                 value_valid, curr, '2015-10-11'
             )
             assert 20 == value
-

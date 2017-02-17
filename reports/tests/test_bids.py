@@ -4,8 +4,7 @@ import couchdb
 import os.path
 from copy import copy
 from reports.config import Config
-from reports.utilities import bids, invoices, tenders, refunds
-from reports.utilities.bids import BidsUtility
+from reports.modules.bids import Bids
 from reports.tests.utils import(
     get_mock_parser,
     test_data,
@@ -13,6 +12,8 @@ from reports.tests.utils import(
     db,
     assertLen
 )
+
+test_config = os.path.join(os.path.dirname(__file__), 'tests.yaml')
 
 test_bids_invalid = [
     [{
@@ -116,10 +117,10 @@ test_award_period = '2016-04-17T13:32:25.774673+02:00'
 
 @pytest.fixture(scope='function')
 def ut(request):
-    mock_parse = get_mock_parser()
-    with mock.patch('argparse.ArgumentParser.parse_args', mock_parse):
-        utility = BidsUtility()
-    return utility
+    config = Config(test_config)
+    config.broker = 'test'
+    bids = Bids(config)
+    return bids
 
 def test_bids_view_invalid_date(db, ut):
     data = {
@@ -1095,9 +1096,10 @@ def test_bids_view_check_audit_documents(db, ut):
         "owner": "teser"
     }
     assertLen(1, data, ut)
-    ut.get_response()
-    ut.response = list(ut.response)
-    response = list(ut.response)
+    ll = []
+    for x in ut.response:
+        ll.append(x)
+    response = ll
     assert response[0]['value']['audits'] != None
 
 def test_bids_view_check_audit_2_documents_dateModified_check(db, ut):
@@ -1142,9 +1144,11 @@ def test_bids_view_check_audit_2_documents_dateModified_check(db, ut):
         "owner": "teser"
     }
     assertLen(1, data, ut)
-    ut.get_response()
-    ut.response = list(ut.response)
-    response = list(ut.response)
+    ut.response
+    ll = []
+    for x in ut.response:
+        ll.append(x)
+    response = ll
     assert response[0]['value']['audits']['datePublished'] == "2016-06-01T12:18:40.193283+03:00"
 
 def test_bids_view_check_audit_2_documents_dateModified_check_without_lots(db, ut):
@@ -1179,10 +1183,11 @@ def test_bids_view_check_audit_2_documents_dateModified_check_without_lots(db, u
         "owner": "teser"
     }
     assertLen(1, data, ut)
-
-    ut.get_response()
-    ut.response = list(ut.response)
-    response = list(ut.response)
+    ut.response
+    ll = []
+    for x in ut.response:
+        ll.append(x)
+    response = ll
     assert response[0]['value']['audits']['datePublished'] == "2016-06-01T12:18:40.193283+03:00"
     
 def test_bids_view_check_audit_1_document_dateModified_check_without_lots(db, ut):
@@ -1208,9 +1213,11 @@ def test_bids_view_check_audit_1_document_dateModified_check_without_lots(db, ut
         "owner": "teser"
     }
     assertLen(1, data, ut)
-    ut.get_response()
-    ut.response = list(ut.response)
-    response = list(ut.response)
+    ut.response
+    ll = []
+    for x in ut.response:
+        ll.append(x)
+    response = ll
     assert response[0]['value']['audits'] != None
 
 #  end of new tests
@@ -1224,9 +1231,10 @@ def test_bids_view_valid(db, ut):
         'bids': test_bids_valid[0],
     }
     assertLen(1, data, ut)
-    ut.get_response()
-    ut.response = list(ut.response)
-    response = list(ut.response)
+    ll = []
+    for x in ut.response:
+        ll.append(x)
+    response = ll
     assert 1000 == response[0]['value']['value']
     assert "44931d9653034837baff087cfc2fb5ac"== response[0]['value']['bid']
     assert "0006651836f34bcda9a030c0bf3c0e6e"== response[0]['value']['tender']
@@ -1268,27 +1276,40 @@ def test_bids_view_period(db, ut):
     doc = copy(test_data)
     doc.update(data)
     ut.db.save(doc)
-
-    ut.start_date = ''
-    ut.end_date = ''
-    ut.get_response()
-    assert 3 == len(list(ut.response))
-
-    ut.start_date = "2016-11-10T15:00:00"
-    ut.end_date = ''
-    ut.get_response()
-    assert 1 == len(list(ut.response))
-    ut.start_date = "2016-12-01T15:00:00"
-    ut.end_date = ''
-    ut.get_response()
-    assert 0 == len(list(ut.response))
-    ut.start_date = "2016-11-01T15:00:00"
-    ut.end_date = "2016-12-01T15:00:00"
-    ut.get_response()
-    assert 2 == len(list(ut.response))
+    ut.config.period = []
+    ll = []
+    for x in ut.response:
+        ll.append(x)
+    response = ll
+    assert 3 == len(ll)
+    ut.config.period = [
+    "2016-11-01T15:00:00"  
+    ]
+    ll = []
+    for x in ut.response:
+        ll.append(x)
+    response = ll
+    assert 2 == len(ll)
+    ut.config.period = [
+    "2016-12-01T15:00:00"    
+    ]
+    ll = []
+    for x in ut.response:
+        ll.append(x)
+    response = ll
+    assert 0 == len(ll)
+    ut.config.period = [
+    "2016-11-01T15:00:00",
+    "2016-12-01T15:00:00"
+    ]
+    ll = []
+    for x in ut.response:
+        ll.append(x)
+    response = ll
+    assert 2 == len(ll)
 
 def test_bids_view_period_edge_limit_check(db, ut):
-    ut.owner = 'test'
+    ut.config.broker = 'test'
     data = {
         "_id": "10028cddd23540e5b6abb9efd2756de1",
         "awardPeriod": {
@@ -1368,12 +1389,18 @@ def test_bids_view_period_edge_limit_check(db, ut):
     doc = copy(test_data)
     doc.update(data)
     ut.db.save(doc)
-
-    ut.start_date = "2016-11-01T15:00:00"
-    ut.end_date = "2016-12-01T15:00:00"
-    ut.get_response()
+    ut.config.period = [
+    "2016-11-01T15:00:00",
+    "2016-12-01T15:00:00"
+    ]
+    #ut.start_date = 
+    #ut.end_date = 
+    ll = []
+    for x in ut.response:
+        ll.append(x)
+    response = ll
     # id ends on e1,e2,e5,e7
-    assert 4 == len(list(ut.response))
+    assert 4 == len(ll)
 
 def test_bids_view_with_lots(db, ut):
     data = {
@@ -1399,63 +1426,63 @@ def test_bids_view_with_lots(db, ut):
     }
     assertLen(1, data, ut)
 
-def test_bids_utility_output(db, ut):
-    data = {
-        'awardPeriod': {'startDate': test_award_period },
-        'bids': test_bids_valid[0],
-        "enquiryPeriod": {
-            "startDate": '2016-04-17T13:32:25.774673+02:00',
-        }
-    }
-    mock_csv = mock.mock_open()
-    doc = copy(test_data)
-    doc.update(data)
-    ut.db.save(doc)
-    with mock.patch('__builtin__.open', mock_csv):
-        ut.run()
-        row = [['0006651836f34bcda9a030c0bf3c0e6e,UA-2016-11-12-000150,,1000,UAH,44931d9653034837baff087cfc2fb5ac,,7.0'],]
-        assert_csv(mock_csv, 'test/test@---bids.csv', ut.headers, row)
+# def test_bids_utility_output(db, ut):
+#     data = {
+#         'awardPeriod': {'startDate': test_award_period },
+#         'bids': test_bids_valid[0],
+#         "enquiryPeriod": {
+#             "startDate": '2016-04-17T13:32:25.774673+02:00',
+#         }
+#     }
+#     mock_csv = mock.mock_open()
+#     doc = copy(test_data)
+#     doc.update(data)
+#     ut.db.save(doc)
+#     with mock.patch('__builtin__.open', mock_csv):
+#         ut.run()
+#         row = [['0006651836f34bcda9a030c0bf3c0e6e,UA-2016-11-12-000150,,1000,UAH,44931d9653034837baff087cfc2fb5ac,,7.0'],]
+#         assert_csv(mock_csv, 'test/test@---bids.csv', ut.headers, row)
 
-def test_bids_utility_output_with_lots(db, ut):
-    data = {
-        "enquiryPeriod": {
-            "startDate": '2016-04-17T13:32:25.774673+02:00',
-        },
-        "awardPeriod": {
-            "startDate": test_award_period,
-        },
+# def test_bids_utility_output_with_lots(db, ut):
+#     data = {
+#         "enquiryPeriod": {
+#             "startDate": '2016-04-17T13:32:25.774673+02:00',
+#         },
+#         "awardPeriod": {
+#             "startDate": test_award_period,
+#         },
 
-        "lots": [
-            {
-                "status": "active",
-                "id": "324d7b2dd7a54df29bad6d0b7c91b2e9",
-                "value": {
-                    "currency": "UAH",
-                    "amount": 2000,
-                    "valueAddedTaxIncluded": False,
-                },
-            }
-        ],
-        "bids": [
-            {
-                "date": "2016-04-07T16:36:58.983102+03:00",
-                "status": "active",
-                "owner": "test",
-                "id": "a22ef2b1374b43ddb886821c0582bc7dk",
-                "lotValues": [
-                    {
-                        "relatedLot": "324d7b2dd7a54df29bad6d0b7c91b2e9",
-                        "date": "2016-04-07T16:36:58.983062+03:00",
-                    }
-                ],
-            }
-        ],
-    }
-    mock_csv = mock.mock_open()
-    doc = copy(test_data)
-    doc.update(data)
-    ut.db.save(doc)
-    with mock.patch('__builtin__.open', mock_csv):
-        ut.run()
-        row = [["0006651836f34bcda9a030c0bf3c0e6e,UA-2016-11-12-000150,324d7b2dd7a54df29bad6d0b7c91b2e9,2000,UAH,a22ef2b1374b43ddb886821c0582bc7dk,,7.0"],]
-        assert_csv(mock_csv, 'test/test@---bids.csv', ut.headers, row)
+#         "lots": [
+#             {
+#                 "status": "active",
+#                 "id": "324d7b2dd7a54df29bad6d0b7c91b2e9",
+#                 "value": {
+#                     "currency": "UAH",
+#                     "amount": 2000,
+#                     "valueAddedTaxIncluded": False,
+#                 },
+#             }
+#         ],
+#         "bids": [
+#             {
+#                 "date": "2016-04-07T16:36:58.983102+03:00",
+#                 "status": "active",
+#                 "owner": "test",
+#                 "id": "a22ef2b1374b43ddb886821c0582bc7dk",
+#                 "lotValues": [
+#                     {
+#                         "relatedLot": "324d7b2dd7a54df29bad6d0b7c91b2e9",
+#                         "date": "2016-04-07T16:36:58.983062+03:00",
+#                     }
+#                 ],
+#             }
+#         ],
+#     }
+#     mock_csv = mock.mock_open()
+#     doc = copy(test_data)
+#     doc.update(data)
+#     ut.db.save(doc)
+#     with mock.patch('__builtin__.open', mock_csv):
+#         ut.run()
+#         row = [["0006651836f34bcda9a030c0bf3c0e6e,UA-2016-11-12-000150,324d7b2dd7a54df29bad6d0b7c91b2e9,2000,UAH,a22ef2b1374b43ddb886821c0582bc7dk,,7.0"],]
+#         assert_csv(mock_csv, 'test/test@---bids.csv', ut.headers, row)
