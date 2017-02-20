@@ -1068,6 +1068,7 @@ def test_bids_view_check_audit_documents(db, ut):
     # return tender_doc.title.indexOf("audit_" + id + "_" + lot.id) === 0; });
     # audit = audits[0]
     data = {
+        "id": "0006651836f34bcda9a030c0bf3c0e6e",
         "status": "unsuccessful",
         "procurementMethodType": "belowThreshold",
         "awardPeriod": {
@@ -1106,6 +1107,7 @@ def test_bids_view_check_audit_2_documents_dateModified_check(db, ut):
     # if(is_multilot) == True
     # if (audits.length > 1) { audit = audits.reduce(function(prev_doc, curr_doc) {return (prev_doc.dateModified > curr_doc.dateModified) ? curr_doc : prev_doc;});
     data = {
+        "id": "0006651836f34bcda9a030c0bf3c0e6e",
         "status": "unsuccessful",
         "procurementMethodType": "belowThreshold",
         "awardPeriod": {
@@ -1393,8 +1395,6 @@ def test_bids_view_period_edge_limit_check(db, ut):
     "2016-11-01T15:00:00",
     "2016-12-01T15:00:00"
     ]
-    #ut.start_date = 
-    #ut.end_date = 
     ll = []
     for x in ut.response:
         ll.append(x)

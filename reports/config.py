@@ -50,7 +50,6 @@ class Config(object):
         return [float(i) for i in self.config['payments']['thresholds']]
 
     @property
-    
     def payments(self, before_2017=False):
         if self.rev:
             key = 'emall_{}'
@@ -58,10 +57,8 @@ class Config(object):
             key = 'cdb_{}'
         key = key.format('2016') if before_2017 else \
                     key.format('2017')
-
-        p = self.config.get('payments', key)
-        import pdb; pdb.set_trace()
-        return [float(i.strip()) for i in p.split(',')]
+        p = self.config.get('payments')[key]            
+        return [float(i) for i in p]
 
     @property
     def out_path(self):

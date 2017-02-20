@@ -1,33 +1,45 @@
 db:
-   host: "127.0.0.1"
-   port: "5984"
-   name: "reports-test"
-   admin:
-      name: "admin"
-      password: "admin"
+  host: "127.0.0.1"
+  port: "5984"
+  name: "reports-test"
+  admin:
+    name: "admin"
+    password: "admin"
 
-   user:
-      name: "test"
-      password: "test"
+  user:
+    name: "test"
+    password: "test"
 
 payments:
-   thresholds:
-      - 20000
-      - 50000
-      - 200000
-      - 1000000
-   cdb:
-      - 5
-      - 25
-      - 80
-      - 110
-      - 400
-   emall:
-      - 3
-      - 15
-      - 40
-      - 60
-      - 300
+  thresholds:
+    - 20000
+    - 50000
+    - 200000
+    - 1000000
+  cdb_2017:
+    - 5
+    - 25
+    - 80
+    - 110
+    - 400
+  cdb_2016:
+    - 7
+    - 50
+    - 150
+    - 250
+    - 700
+  emall_2016:
+    - 5
+    - 20
+    - 50
+    - 75
+    - 350
+  emall_2017:
+    - 3
+    - 15
+    - 40
+    - 60
+    - 300
 
 out:
     out_dir: "test"

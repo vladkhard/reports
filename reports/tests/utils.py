@@ -29,6 +29,20 @@ test_data = {
         "id": "1ac8c648538d4930918b0b0a1e884ef2",
         "awardID": "3d5182c5a0424a4f8508da712affa82f"
     }],
+    "revisions": [{
+               "typeof": "active",
+               "date": "2016-12-31T22:43:50.557417+03:00",
+                "changes": [
+
+               {
+
+                   "path": "/tender_token",
+
+                   "op": "remove"
+
+               },],
+               "author": "contracting_data_bridge"
+            }],
     "bids": [{
         "owner": "test",
         "date": "data",
