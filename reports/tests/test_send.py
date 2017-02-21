@@ -1,4 +1,4 @@
-from reports.utilities.send import AWSClient
+
 import reports
 import os
 import pytest
@@ -10,19 +10,18 @@ from mock import patch
 import errno
 from socket import error
 import datetime
-from reports.config import Config
+from reports.report import ReportConfig
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE
-from reports.utilities.send import AWSClient
+from reports.modules.aws import AWSClient
 from mock import Mock, MagicMock
 
 test_config = os.path.join(os.path.dirname(__file__), 'tests.yaml')
 
 @pytest.fixture(scope='function')
 def client():
-    config = Config(test_config)
+    config = ReportConfig(test_config)
     aws_client = AWSClient(config)
-    aws_client._update_credentials = MagicMock(return_value={'AWS_ACCESS_KEY_ID':'user', 'AWS_SECRET_ACCESS_KEY': 'pass'})
     return aws_client
 
 def test_get_entry(client):
@@ -48,13 +47,6 @@ def test_get_entry(client):
     file_name = 'test@2016-09-01--2016-10-01-bids-invoices-tenders-refunds.zip'
     result = client.get_entry(file_name)
     assert result['type'] == 'bids, invoices, tenders, refunds'
-
-def test_update_credentials(client):
-    path = 'billing/s3/sandbox'
-    with mock.patch('subprocess.check_output', return_value='aws_access_key_id=user\naws_secret_access_key=pass' ):
-        result = client._update_credentials(path)
-        assert result['AWS_ACCESS_KEY_ID'] == 'user'
-        assert result['AWS_SECRET_ACCESS_KEY'] == 'pass'
 
 def test_render_email_with_encrypt(client):
     context = {'link': 'test_url', 'encrypted': True, 'type': 'bids and invoices', 'period': '2016-09-01--2016-10-01', 'broker': 'broker1'}
@@ -91,7 +83,7 @@ def test_send_files_withTS(client):
                    
     with mock.patch('reports.utilities.send.boto3.client') as s:
         client.send_files(files, timestamp)
-        s.return_value.upload_file.assert_called_with('broker1@2016-09-01--2016-10-01-bids-invoices.zip', client.bucket, key)
+        s.return_value.upload_file.assert_called_with('broker1@2016-09-01--2016-10-01-bids-invoices.zip', client.config.bucket, key)
         s.return_value.generate_presigned_url.assert_called_with('get_object', ExpiresIn='1209600', Params={'Bucket': 'some-name', 'Key': '2016-11-21/13-07-39-406832/broker1@2016-09-01--2016-10-01-bids-invoices.zip'})
 
 def test_send_files_withoutTS(client):
@@ -103,7 +95,7 @@ def test_send_files_withoutTS(client):
         d.now.return_value = datetime.datetime(year=2011, month=11, day=11, hour=11, minute=11, second=11, microsecond=11)
         with mock.patch('reports.utilities.send.boto3.client') as s:
             client.send_files(files)
-            s.return_value.upload_file.assert_called_with('broker1@2016-09-01--2016-10-01-bids-invoices.zip', client.bucket, key)
+            s.return_value.upload_file.assert_called_with('broker1@2016-09-01--2016-10-01-bids-invoices.zip', client.config.bucket, key)
             s.return_value.generate_presigned_url.assert_called_with('get_object', ExpiresIn='1209600', Params={'Bucket': 'some-name', 'Key': '2011-11-11/11-11-11-000011/broker1@2016-09-01--2016-10-01-bids-invoices.zip'})
 
 def test_send_test_emails(client):

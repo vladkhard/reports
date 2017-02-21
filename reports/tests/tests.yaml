@@ -55,7 +55,7 @@ aws:
 
     bucket: "some-name"
     expires: "1209600"
-    s3_pass_path": "billing/s3/sandbox"
+    s3_pass_path: "billing/s3/sandbox"
     ses_pass_path: "billing/ses/sandbox"
 
 
@@ -69,26 +69,11 @@ email:
 
 
 
-brokers_emails:
+brokers:
 
     broker1: ["mail1@test.com","mail2@test.com"]
 
     
-
-loggers:
-    keys: "root"
-
-
-
-handlers:
-
-    keys: "stream_handler"
-
-
-
-formatters:
-    keys: "formatter"
-
 
 
 logger_root:
@@ -116,40 +101,61 @@ formatter_formatter:
     format: "%(asctime)s %(name)-12s %(levelname)-8s %(message)s"
 
 
+vault: "pass"
+
+version: 1
+formatters:
+
+    simpleFormater:
+
+        format: '%(asctime)s - %(levelname)s: %(message)s'
+
+        datefmt: '%Y/%m/%d %H:%M:%S'
 
 
 
-# vault: ${options['vault']}
+handlers:
 
-# zip_path: ${options['zip_path']}
-# ${options['emails']}
+    console:
 
-# version: 1
-# formatters:
-#     simpleFormater:
-#         format: '%(asctime)s - %(levelname)s: %(message)s'
-#         datefmt: '%Y/%m/%d %H:%M:%S'
+        class: logging.StreamHandler
 
-# handlers:
-#     console:
-#         class: logging.StreamHandler
-#         formatter: simpleFormater
-#         level: DEBUG
-#         stream: ext://sys.stdout
-#     file:
-#         class : logging.FileHandler
-#         formatter: simpleFormater
-#         level: WARNING
-#         filename: ${parts.buildout.directory}/var/log/reports.log
+        formatter: simpleFormater
 
-# loggers:
-#     clogger:
-#         level: DEBUG
-#         handlers: [console]
-#     flogger:
-#         level: WARNING
-#         handlers: [file]
+        level: DEBUG
 
-# root:
-#     level: DEBUG
-#     handlers: [console, file]
+        stream: ext://sys.stdout
+
+    file:
+
+        class : logging.FileHandler
+
+        formatter: simpleFormater
+
+        level: WARNING
+
+        filename: /data/greckas/mailtest_script/reports/var/log/reports.log
+
+
+
+loggers:
+
+    clogger:
+
+        level: DEBUG
+
+        handlers: [console]
+
+    flogger:
+
+        level: WARNING
+
+        handlers: [file]
+
+
+
+root:
+
+    level: DEBUG
+
+    handlers: [console, file]

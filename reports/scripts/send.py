@@ -1,4 +1,4 @@
-from reports.modules import AWSClient
+from reports.modules.aws import AWSClient
 from reports.vault import Vault
 from reports.report import ReportConfig
 from reports.helpers import (
