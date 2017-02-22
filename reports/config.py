@@ -57,7 +57,7 @@ class Config(object):
             key = 'cdb_{}'
         key = key.format('2016') if before_2017 else \
                     key.format('2017')
-        p = self.config.get('payments')[key]            
+        p = self.config["payments"][key]            
         return [float(i) for i in p]
 
     @property
