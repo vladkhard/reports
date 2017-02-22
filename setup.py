@@ -16,6 +16,8 @@ install_requires = [
 
 test_requires = install_requires + [
     'mock',
+    'pytest',
+    'pytest-cov',
 ]
 
 setup(
@@ -30,13 +32,14 @@ setup(
     url='https://github.com/openprocurement/reports',
     entry_points={
         'console_scripts': [
-            'bids = reports.utilities.bids:run',
-            'tenders = reports.utilities.tenders:run',
-            'refunds = reports.utilities.refunds:run',
-            'invoices = reports.utilities.invoices:run',
+            'bids = reports.scripts.bids:run',
+            'tenders = reports.scripts.tenders:run',
+            'refunds = reports.scripts.refunds:run',
+            'invoices = reports.scripts.invoices:run',
+            'generate = reports.report:run',
+            'zip = reports.scripts.zip:run',
+            'send = reports.scripts.send:run',
             'init = reports.db_init:run',
-            'zip = reports.utilities.zip:run',
-            'send = reports.utilities.send:run',
         ]
     },
     include_package_data=True,

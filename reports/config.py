@@ -1,39 +1,55 @@
-import sys
-from logging.config import fileConfig
-from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+from __future__ import print_function
+
+import os.path
+import yaml
+
+from reports.helpers import (
+    convert_date,
+    create_db_url,
+    thresholds_headers
+)
+
+
+ARGS = [
+    'broker',
+    'period',
+    'config',
+    'timezone',
+    'include_cancelled'
+]
 
 
 class Config(object):
 
-    def __init__(self, path, rev=False):
-        self.config = ConfigParser()
-        self.config.read(path)
-        fileConfig(path)
+    def __init__(self, config,rev=False):
+        
         self.rev = rev
+        for key in ARGS:
+            setattr(self, key, '')
 
-    def get_option(self, section, name):
-        try:
-            opt = self.config.get(section, name)
-        except NoSectionError:
-            print "No section {} in configuration file".format(section)
-            sys.exit(1)
-        except NoOptionError:
-            print "No option {} in configuration file".format(name)
-            sys.exit(1)
-        return opt
+        if isinstance(config, dict):
+            self.config = config
+            for key in ARGS:
+                if key in config:
+                    setattr(self, key, config[key])
+        else:
+            with open(config, 'r') as yaml_in:
+                self.config = yaml.load(yaml_in)
+        self.module = ''
 
-    @property
-    def api_url(self):
-        host = self.get_option('api', 'host')
-        version = self.get_option('api', 'version')
-        url = '{}/api/{}'.format(host, version)
-        return url
+    @classmethod
+    def from_namespace(cls, args):
+        inst = cls(args.config)
+        for key in [a for a in ARGS if a != 'config']:
+            if hasattr(args, key):
+                setattr(inst, key, getattr(args, key))
+        return inst
 
     @property
     def thresholds(self):
-        t = self.config.get('payments', 'thresholds')
-        return [float(i.strip()) for i in t.split(',')]
+        return [float(i) for i in self.config['payments']['thresholds']]
 
+    @property
     def payments(self, before_2017=False):
         if self.rev:
             key = 'emall_{}'
@@ -41,10 +57,59 @@ class Config(object):
             key = 'cdb_{}'
         key = key.format('2016') if before_2017 else \
                     key.format('2017')
-
-        p = self.config.get('payments', key)
-        return [float(i.strip()) for i in p.split(',')]
+        p = self.config["payments"][key]            
+        return [float(i) for i in p]
 
     @property
     def out_path(self):
-        return self.get_option('out', 'out_dir')
+        return self.config.get('out', '').get('out_dir', '')
+
+    def start_date(self):
+        if len(self.period) > 0:
+            return convert_date(self.period[0])
+        return ''
+
+    def end_date(self):
+        if len(self.period) > 1:
+            return convert_date(self.period[1])
+        return ''
+
+    @property
+    def out_file(self):
+        start = self.start_date().split('T')[0]\
+                if self.start_date else ''
+        end = self.end_date().split('T')[0]\
+                if self.end_date else ''
+        name = "{}@{}--{}-{}.csv".format(
+            self.broker,
+            start,
+            end,
+            self.module
+        )
+        return os.path.join(self.out_path, name)
+
+    @property
+    def db_url(self):
+        db = self.config['db']
+        return create_db_url(
+            db['host'],
+            db['port'],
+            db['user']['name'],
+            db['user']['password'],
+            db['name']
+        )
+
+    @property
+    def admin_db_url(self):
+        db = self.config['db']
+        return create_db_url(
+            db['host'],
+            db['port'],
+            db['admin']['name'],
+            db['admin']['password'],
+            db['name']
+        )
+
+    @property
+    def headers(self):
+        return thresholds_headers(self.thresholds)

@@ -1,12 +1,20 @@
 # coding: utf-8
 import mock
 import os.path
+import pytest
+import couchdb
+from copy import copy
+from reports.config import Config
+from reports.helpers import create_db_url
 
 
+test_config = os.path.join(os.path.dirname(__file__), 'tests.yaml')
 test_data = {
     "procurementMethod": "open",
     "status": "complete",
-    "owner": "",
+    "owner": "test",
+    "doc_type": "Tender",
+    'tender': '0006651836f34bcda9a030c0bf3c0e6e',
     "_id": "0006651836f34bcda9a030c0bf3c0e6e",
     "tenderID": "UA-2016-11-12-000150",
     "dateModified": "2016-04-31T19:03:53.704712+03:00",
@@ -14,19 +22,27 @@ test_data = {
         "startDate": "2016-11-13T15:15:00+02:00",
     },
     "enquiryPeriod": {
-        "startDate": "",
+        "startDate": "2016-11-13T15:15:00+02:00",
     },
     "contracts": [{
         "status": "",
         "id": "1ac8c648538d4930918b0b0a1e884ef2",
         "awardID": "3d5182c5a0424a4f8508da712affa82f"
     }],
-    "awards": [{
-        "status": "",
-        "bid_id": "44931d9653034837baff087cfc2fb5ac",
-        "date": "2016-11-17T13:32:25.774673+02:00",
-        "id": "3d5182c5a0424a4f8508da712affa82f"
-    }],
+    "revisions": [{
+               "typeof": "active",
+               "date": "2016-12-31T22:43:50.557417+03:00",
+                "changes": [
+
+               {
+
+                   "path": "/tender_token",
+
+                   "op": "remove"
+
+               },],
+               "author": "contracting_data_bridge"
+            }],
     "bids": [{
         "owner": "test",
         "date": "data",
@@ -39,7 +55,6 @@ test_data = {
     "procuringEntity": {
         'kind': 'general',
     },
-
 }
 
 
@@ -53,8 +68,6 @@ class MockCurrencyResponce(object):
      "rate":2,"cc":"USD","exchangedate":"16.05.2016"}]
     '''
 
-test_config = os.path.join(os.path.dirname(__file__), 'tests.ini')
-
 
 def get_mock_parser():
     mock_parse = mock.MagicMock()
@@ -67,6 +80,48 @@ def get_mock_parser():
     type(mock_parse.return_value).kind = mock.PropertyMock(
         return_value=['kind', 'general'])
     type(mock_parse.return_value).status = mock.PropertyMock(
-            return_value={'action': '', 'statuses': ['complete', 'active']})
+        return_value={'action': '', 'statuses': ['complete', 'active']})
 
     return mock_parse
+
+
+def assert_csv(csv, name , headers, rows):
+    csv.assert_called_once_with(name, 'w')
+    handler = csv()
+    handler.write.assert_any_call('{}{}'.format(
+        ','.join(headers), '\r\n'
+    ))
+    for row in rows:
+        handler.write.assert_any_call('{}{}'.format(
+            ','.join([str(i) for i in row]), '\r\n'
+        ))
+
+
+def assertLen(count, data, utility):
+    ll = []  
+    doc = copy(test_data)
+    doc.update(data)
+    utility.db.save(doc)
+    utility.response
+    for x in utility.response:
+        ll.append(x)
+    assert count == len(ll)
+
+
+@pytest.fixture(scope='function')
+def db(request):
+    conf = Config(test_config)
+    host = conf.config['db']['host']
+    port = conf.config['db']['port']
+    user = conf.config['db']['admin']['name']
+    passwd = conf.config['db']['admin']['password']
+
+    db_name = conf.config['db']['name']
+    server = couchdb.Server(
+        create_db_url(host, port, user, passwd)
+    )
+    if db_name not in server:
+        server.create(db_name)
+    def delete():
+        server.delete(db_name)
+    request.addfinalizer(delete)
