@@ -56,6 +56,35 @@ class BaseUtility(object):
             startkey=(self.config.broker, self.config.start_date()),
             endkey=(self.config.broker, date)
         )
+    def get_initial_bids(self, audit, tender_id):
+        url = audit is not None and audit.get('url')
+        if not url:
+            self.Logger.fatal('Invalid audit for tender id={}'.format(tender_id))
+            self.initial_bids = []
+            return
+        try:
+            yfile = yaml.load(requests.get(url).text)
+            self.initial_bids = yfile['timeline']['auction_start']['initial_bids']
+            self.initial_bids_for = yfile.get('tender_id', yfile.get('id', ''))
+            return self.initial_bids
+        except (ScannerError, KeyError, TypeError) as e:
+            msg = 'Falied to scan audit file'\
+                    ' for tender id={}. Error {}'.format(tender_id, e)
+            self.Logger.error(msg)
+        except RequestException as e:
+            msg = "Request falied at getting audit file"\
+                    "for tender id={0}  with error '{1}'".format(tender_id, e)
+            self.Logger.info(msg)
+        self.initial_bids = []
+
+    def bid_date_valid(self, bid_id):
+        for bid in self.initial_bids:
+            if bid['date'] < "2016-04-01":
+                self.skip_bids.add(bid['bidder'])
+        if bid_id in self.skip_bids:
+            self.Logger.info('Skipped fetched early bid: %s', bid_id)
+            return False
+        return True
 
 
 class BaseBidsGenerator(BaseUtility):

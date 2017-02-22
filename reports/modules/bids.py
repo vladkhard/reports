@@ -36,9 +36,13 @@ class Bids(BaseBidsGenerator,
     def row(self, row):
         record = self.record(row)
         record['bill'] = self.get_payment(record['value'])
-        if self.config.include_cancelled and row.get('cancelled', ''):
-            record['bill'] = -record['bill']
-
+        self.get_initial_bids(record.get('audits', ''),
+                              record.get('tender', ''))
+        if not self.initial_bids:
+            use_audit = False
+        if record.get('startdate', '') < "2016-04-01" and \
+                not self.bid_date_valid(bid):
+            return
         logger.info(
             "Bill {} for tender {} with value {}".format(
                 record['bill'], record['tender'], record['value']
@@ -63,6 +67,14 @@ class Invoices(BaseBidsGenerator,
 
     def row(self, row):
         record = self.record(row)
+        self.get_initial_bids(record.get('audits', ''),
+                              record.get('tender', ''))
+        if not self.initial_bids:
+            use_audit = False
+
+        if record.get('startdate', '') < "2016-04-01" and \
+                not self.bid_date_valid(bid):
+            return
         payment = self.get_payment(record['value'])
         for i, x in enumerate(self.config.payments):
             if payment == x:
@@ -70,10 +82,6 @@ class Invoices(BaseBidsGenerator,
                       'in {} tender'.format(payment, record['value'],
                                             record['tender'])
                 logger.info(msg)
-                if self.config.include_cancelled and row.get('cancelled', ''):
-                    self.counter_minus[i] += 1
-                else:
-                    self.counter[i] += 1
 
     @property
     def rows(self):
@@ -84,12 +92,5 @@ class Invoices(BaseBidsGenerator,
             self.counter,
             [c * v for c, v in zip(self.counter, self.config.payments)]
         ]
-        if self.config.include_cancelled:
-            rows += [
-                [],
-                [-x for x in self.config.payments],
-                self.counter_minus,
-                [-(c * v) for c, v in zip(self.counter_minus, self.config.payments)]
-            ]
         for row in rows:
             yield row
