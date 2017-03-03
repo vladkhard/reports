@@ -11,23 +11,9 @@ db:
       password: ${options['user_password']} 
 
 payments:
-   thresholds:
-      - 20000
-      - 50000
-      - 200000
-      - 1000000
-   cdb:
-      - 5
-      - 25
-      - 80
-      - 110
-      - 400
-   emall:
-      - 3
-      - 15
-      - 40
-      - 60
-      - 300
+   thresholds: [20000, 50000, 200000, 1000000]
+   cdb: [5, 25, 80, 110, 400]
+   emall: [3, 15, 40, 60, 300]
 
 out:
    out_dir: ${parts.buildout.directory}/var/reports

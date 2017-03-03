@@ -6,8 +6,11 @@ function(doc) {
     if (!startDate) {
         startDate = find_first_revision_date(doc);
     }
-
-    if (doc.procurementMethod !== "open") {return;}
+    if (['competitiveDialogueEU', 'competitiveDialogueUA'].indexOf(doc.procurementMethodType) !== -1) {
+      if (['open', 'selective'].indexOf(doc.procurementMethod) !== -1) {return;}
+    } else {
+      if (doc.procurementMethod !== "open") {return;}
+    }
     if ((doc.mode || "") === "test") { return;}
 
     var bids_disclojure_date = (doc.qualificationPeriod || {}).startDate || (doc.awardPeriod || {}).startDate || null;
@@ -22,7 +25,7 @@ function(doc) {
     var id = doc._id;
     var tender_start_date = doc.tenderPeriod.startDate;
     var tenderID = doc.tenderID;
-    var is_multilot = ("lots" in doc)?true:false;
+    var is_multilot = ("lots" in doc) ? true:false;
     var type = doc.procurementMethodType;
 
     function get_eu_tender_bids(tender) {
