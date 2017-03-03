@@ -50,6 +50,8 @@ email:
 brokers:
    test:
       - test@test.com
+   broker1:
+      - test@test.com
 zip_path: billing/zip
 
 

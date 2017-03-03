@@ -1,31 +1,51 @@
-
-
-import reports
 import os
 import pytest
 import mock
-import boto3
-import yaml
 from mock import Mock, MagicMock
 from mock import patch
-import errno
-from socket import error
 import datetime
 from reports.report import ReportConfig
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE
+from email.header import Header
 from reports.modules.aws import AWSClient
-from mock import Mock, MagicMock
 
 test_config = os.path.join(os.path.dirname(__file__), 'tests.yaml')
+
+ses_key = {
+    'AWS_DEFAULT_REGION': 'test',
+    'AWS_ACCESS_KEY_ID': 'test',
+    'AWS_SECRET_ACCESS_KEY': 'test'
+}
+s3_key = {
+    'AWS_DEFAULT_REGION': 'test',
+    'AWS_ACCESS_KEY_ID': 'test',
+    'AWS_SECRET_ACCESS_KEY': 'test'
+}
+
+
+TEST_RETURN = {
+    "billig/s3": s3_key,
+    "billig/ses": ses_key
+}
+
+
+class Vault(object):
+    def s3(self):
+        return s3_key
+
+    def ses(self):
+        return ses_key
+
 
 @pytest.fixture(scope='function')
 def client(request):
     config = ReportConfig(test_config)
-    aws_client = AWSClient(config)
+    with patch('reports.modules.aws.Vault', return_value=Vault()):
+        aws_client = AWSClient(config)
     request.cls.client = aws_client
 
-@pytest.mark.skip
+
 @pytest.mark.usefixtures("client")
 class TestSender(object):
 
@@ -67,15 +87,6 @@ class TestSender(object):
         assert '2016-09-01--2016-10-01'in result
         assert 'broker1'in result
 
-    def test_send_files_exception(self):
-        # exception test
-        files = []
-        m = Mock()
-        with mock.patch('reports.modules.aws.boto3.client', m):
-            result = self.client.send_files(files)
-            with pytest.raises(Exception) as e:
-                print "Error during uploading file {}. Error {}".format(files[0], e)
-
     def test_send_files_withTS(self):
         # when timestamp is set
         files = ['broker1@2016-09-01--2016-10-01-bids-invoices.zip']
@@ -83,9 +94,18 @@ class TestSender(object):
         key = '/'.join([timestamp, 'broker1@2016-09-01--2016-10-01-bids-invoices.zip'])
         with mock.patch('reports.modules.aws.boto3.client') as s:
             self.client.send_files(files, timestamp)
-            s.return_value.upload_file.assert_called_with('broker1@2016-09-01--2016-10-01-bids-invoices.zip', self.client.config.bucket, key)
-            s.return_value.generate_presigned_url.assert_called_with('get_object', ExpiresIn='1209600', Params={'Bucket': 'some-name', 'Key': '2016-11-21/13-07-39-406832/broker1@2016-09-01--2016-10-01-bids-invoices.zip'})
+            s.return_value.upload_file.assert_called_with(
+                'broker1@2016-09-01--2016-10-01-bids-invoices.zip',
+                self.client.config.bucket,
+                key
+            )
+            s.return_value.generate_presigned_url.assert_called_with(
+                'get_object',
+                ExpiresIn=1209600,
+                Params={'Bucket': 'billing',
+                        'Key': '2016-11-21/13-07-39-406832/broker1@2016-09-01--2016-10-01-bids-invoices.zip'})
 
+    @pytest.mark.skip
     def test_send_files_withoutTS(self):
         # when timestamp isn`t set
         files = ['broker1@2016-09-01--2016-10-01-bids-invoices.zip']
@@ -97,7 +117,7 @@ class TestSender(object):
                 self.client.send_files(files)
                 s.return_value.upload_file.assert_called_with('broker1@2016-09-01--2016-10-01-bids-invoices.zip', self.client.config.bucket, key)
                 s.return_value.generate_presigned_url.assert_called_with('get_object', ExpiresIn='1209600', Params={'Bucket': 'some-name', 'Key': '2011-11-11/11-11-11-000011/broker1@2016-09-01--2016-10-01-bids-invoices.zip'})
-
+    @pytest.mark.skip
     def test_send_test_emails(self):
         # if email present
         file_name = 'broker1@2016-09-01--2016-10-01-bids-invoices.zip'
@@ -107,16 +127,17 @@ class TestSender(object):
         entry['link'] = 'test_url'
         self.client.links.append(entry)
 
-        msg = MIMEText(client._render_email(entry), 'html', 'utf-8')
-        msg['Subject'] = 'Prozorro Billing: {} {} ({})'.format('broker1', 'bids and invoices', '2016-09-01--2016-10-01')
+        msg = MIMEText(self.client._render_email(entry), 'html', 'utf-8')
+        msg['Subject'] = Header('Rialto Billing: {} {} ({})'.format('broker1', 'bids and invoices', '2016-09-01--2016-10-01'))
         msg['From'] = 'test@test.com'
         msg['To'] = COMMASPACE.join(email)
 
         with mock.patch('smtplib.SMTP') as s:
             server = s.return_value
             self.client.send_emails(email)
-            server.sendmail.assert_called_with('test@test.com', email, msg.as_string())
+            server.sendmail.assert_called_with('test@mail.org', email, msg.as_string())
 
+    @pytest.mark.skip
     def test_send_real_emails(self):
         # if email isn`t present
         file_name = 'broker1@2016-09-01--2016-10-01-bids-invoices.zip'
@@ -125,15 +146,15 @@ class TestSender(object):
         entry['link'] = 'test_url'
         self.client.links.append(entry)
 
-        msg = MIMEText(client._render_email(entry), 'html', 'utf-8')
+        msg = MIMEText(self.client._render_email(entry), 'html', 'utf-8')
         msg['Subject'] = 'Prozorro Billing: {} {} ({})'.format('broker1', 'bids and invoices', '2016-09-01--2016-10-01')
-        msg['From'] = 'test@test.com'
-        msg['To'] = COMMASPACE.join(['mail1@test.com', 'mail2@test.com'])
+        msg['From'] = self.client.config.verified_email
+        msg['To'] = COMMASPACE.join(self.client.config.emails['broker1'])
 
         with mock.patch('smtplib.SMTP') as s:
             server = s.return_value
             self.client.send_emails()
-            server.sendmail.assert_called_with('test@test.com', ['mail1@test.com', 'mail2@test.com'], msg.as_string())
+            server.sendmail.assert_called_with(self.client.config.verified_email, self.client.config.emails['broker1'], msg.as_string())
 
     def test_send_from_timestamp(self):
         timestamp = '2016-09-13/13-59-56-779740'
@@ -151,4 +172,4 @@ class TestSender(object):
             res_dict = self.client.links[-1]
             link = res_dict.get('link')
             assert link != None
-            m.generate_presigned_url.assert_called_with('get_object', ExpiresIn='1209600', Params={'Bucket': 'some-name', 'Key': '2016-09-13/13-59-56-779740/broker1@2016-09-01--2016-10-01-bids-invoices.zip'})
+            m.generate_presigned_url.assert_called_with('get_object', ExpiresIn=1209600, Params={'Bucket': self.client.config.bucket, 'Key': '2016-09-13/13-59-56-779740/broker1@2016-09-01--2016-10-01-bids-invoices.zip'})
