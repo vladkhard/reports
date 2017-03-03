@@ -1,39 +1,29 @@
 # coding: utf-8
-import mock
 import os.path
 import pytest
 import couchdb
 from copy import copy
 from reports.config import Config
-from reports.helpers import create_db_url
 
 
-test_config = os.path.join(os.path.dirname(__file__), 'tests.ini')
+test_config = os.path.join(os.path.dirname(__file__), 'tests.yaml')
+
 test_data = {
     "procurementMethod": "open",
     "status": "complete",
-    "owner": "test",
+    "owner": "tester",
+    "bids": [],
     "doc_type": "Tender",
-    'tender': '0006651836f34bcda9a030c0bf3c0e6e',
+    "id": "0006651836f34bcda9a030c0bf3c0e6e",
     "_id": "0006651836f34bcda9a030c0bf3c0e6e",
     "tenderID": "UA-2016-11-12-000150",
-    "dateModified": "2016-04-31T19:03:53.704712+03:00",
+    "dateModified": "2016-11-31T19:03:53.704712+03:00",
     "tenderPeriod": {
         "startDate": "2016-11-13T15:15:00+02:00",
     },
     "enquiryPeriod": {
         "startDate": "2016-11-13T15:15:00+02:00",
     },
-    "contracts": [{
-        "status": "",
-        "id": "1ac8c648538d4930918b0b0a1e884ef2",
-        "awardID": "3d5182c5a0424a4f8508da712affa82f"
-    }],
-    "bids": [{
-        "owner": "test",
-        "date": "data",
-        "id": "some_id"
-    }],
     "value": {
         "currency": "UAH",
         "amount": 1000,
@@ -41,6 +31,60 @@ test_data = {
     "procuringEntity": {
         'kind': 'general',
     },
+    "procurementMethodType": "belowThreshold",
+}
+
+
+test_contract = {
+    "status": "active",
+    "id": "1ac8c648538d4930918b0b0a1e884ef2",
+    "awardID": "3d5182c5a0424a4f8508da712affa82f"
+}
+
+test_bid_invalid_status = {
+    "owner": "test",
+    "status": "invalid",
+    "date": "2016-03-17T13:32:25.774673+02:00",
+    "id": "44931d9653034837baff087cfc2fb5ac",
+}
+
+test_bid_invalid_date = {
+    "status": "active",
+    "owner": "test",
+    "date": "2016-03-17T13:32:25.774673+02:00",
+    "id": "44931d9653034837baff087cfc2fb5ac"
+}
+
+test_bid_valid = {
+    "owner": "test",
+    "status": "active",
+    "date": "2016-04-17T13:32:25.774673+02:00",
+    "id": "44931d9653034837baff087cfc2fb5ac",
+}
+
+test_lot = {
+    "id": "324d7b2dd7a54df29bad6d0b7c91b2e9",
+    "status": "active",
+    "value": {
+        "currency": "UAH",
+        "amount": 2000,
+        "valueAddedTaxIncluded": False,
+    }
+}
+
+test_eu_qualification_for_valid_bid = {
+    "bidID": "44931d9653034837baff087cfc2fb5ac",
+    "lotID": test_lot['id']
+}
+
+test_lot_values = {
+    "relatedLot": "324d7b2dd7a54df29bad6d0b7c91b2e9",
+    "date": "2016-04-07T16:36:58.983062+03:00",
+}
+
+
+test_award_period = {
+    "startDate": '2016-04-17T13:32:25.774673+02:00'
 }
 
 
@@ -55,23 +99,7 @@ class MockCurrencyResponce(object):
     '''
 
 
-def get_mock_parser():
-    mock_parse = mock.MagicMock()
-    type(mock_parse.return_value).config = mock.PropertyMock(
-        return_value=test_config)
-    type(mock_parse.return_value).broker = mock.PropertyMock(
-        return_value='test')
-    type(mock_parse.return_value).period = mock.PropertyMock(
-        return_value=[])
-    type(mock_parse.return_value).kind = mock.PropertyMock(
-        return_value=['kind', 'general'])
-    type(mock_parse.return_value).status = mock.PropertyMock(
-        return_value={'action': '', 'statuses': ['complete', 'active']})
-
-    return mock_parse
-
-
-def assert_csv(csv, name , headers, rows):
+def assert_csv(csv, name, headers, rows):
     csv.assert_called_once_with(name, 'w')
     handler = csv()
     handler.write.assert_any_call('{}{}'.format(
@@ -82,31 +110,25 @@ def assert_csv(csv, name , headers, rows):
             ','.join([str(i) for i in row]), '\r\n'
         ))
 
+class BaseBillingTest(object):
 
-def assertLen(count, data, utility):  
-    doc = copy(test_data)
-    doc.update(data)
-    utility.db.save(doc)
-    utility.get_response()
-    utility.response = list(utility.response)
-    assert count == len(utility.response)
+    def assertLen(self, count, data):
+        doc = copy(test_data)
+        doc.update(data)
+        self.ut.db.save(doc)
+        response = list(self.ut.response)
+        assert count == len(response)
 
 
 @pytest.fixture(scope='function')
 def db(request):
     conf = Config(test_config)
-    host = conf.get_option('db', 'host')
-    port = conf.get_option('db', 'port')
-    user = conf.get_option('admin', 'username')
-    passwd = conf.get_option('admin', 'password')
-
-    db_name = conf.get_option('db', 'name')
-    server = couchdb.Server(
-        create_db_url(host, port, user, passwd)
-    )
+    server = couchdb.Server(os.path.dirname(conf.db_url))
+    db_name = os.path.basename(conf.db_url)
     if db_name not in server:
         server.create(db_name)
+
     def delete():
         server.delete(db_name)
+    request.cls.db = server[db_name]
     request.addfinalizer(delete)
-
