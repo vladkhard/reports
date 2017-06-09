@@ -33,8 +33,7 @@ email:
    smtp_port: ${options['smtp_port']}
    verified_email: ${options['verified_email']}
 
-brokers:
-   ${options['emails']}
+${options['emails']}
 
 version: 1
 loggers:
