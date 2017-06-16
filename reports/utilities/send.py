@@ -18,7 +18,8 @@ from reports.helpers import get_operations, get_send_args_parser
 from datetime import datetime
 
 Logger = None
-
+YES = ['yes', 'true', 1, 'y', True]
+NO = ['no', 'n', 'false', 0, False]
 
 
 class AWSClient(object):
@@ -35,7 +36,8 @@ class AWSClient(object):
         self.smtp_server = self.config.get('email', 'smtp_server')
         self.smtp_port = self.config.get('email', 'smtp_port')
         self.verified_email = self.config.get('email', 'verified_email')
-        self.use_auth = self.config.get('email', 'use_auth') or False
+        use_auth = self.config.get('email', 'use_auth')
+        self.use_auth = use_auth.lower() in YES
         self.emails_to = dict((key, field.split(',')) for key, field in self.config.items('brokers_emails'))
         self.template_env = Environment(
                 loader=PackageLoader('reports', 'templates'))
