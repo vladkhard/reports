@@ -35,6 +35,7 @@ class AWSClient(object):
         self.smtp_server = self.config.get('email', 'smtp_server')
         self.smtp_port = self.config.get('email', 'smtp_port')
         self.verified_email = self.config.get('email', 'verified_email')
+        self.use_auth = self.config.get('email', 'use_auth') or False
         self.emails_to = dict((key, field.split(',')) for key, field in self.config.items('brokers_emails'))
         self.template_env = Environment(
                 loader=PackageLoader('reports', 'templates'))
@@ -109,10 +110,11 @@ class AWSClient(object):
         password = cred.get('AWS_SECRET_ACCESS_KEY')
         smtpserver = smtplib.SMTP(self.smtp_server, self.smtp_port)
 
-        smtpserver.ehlo()
-        smtpserver.starttls()
-        smtpserver.ehlo()
-        smtpserver.login(user, password)
+        if self.use_auth and (user and password):
+            smtpserver.ehlo()
+            smtpserver.starttls()
+            smtpserver.ehlo()
+            smtpserver.login(user, password)
 
         try:
             for context in self.links:
