@@ -388,50 +388,67 @@ function(doc) {
     };
 
     function check_lot_status_v2(lot) {
-        if (['complete', 'active'].indexOf(lot.status) !== -1) {
+        if ((['complete', 'active'].indexOf(lot.status) !== -1) && (['active.qualification', 'active.awarded', 'complete'].indexOf(tender.status) !== -1)) {
             return true;
         }
     };
 
     function get_contract_date(tender) {
-        tender.contracts.forEach(function(contract) {
-            if ('dateSigned' in contract) {
-                date = contract.dateSigned;
+        (tender.contracts || []).forEach(function(contract) {
+            if (contract.status === 'active') {
+                var date = contract.date;
             }
         });
         return date;
     }
 
     function get_contract_date_for_lot(tender, lot) {
-        tender.contracts.forEach(function(contract) {
-            award_id = contract.awardID;
-            tender.awards.forEach(function(award) {
-                if ((award.id === award_id) && (award.lotID === lot.id)) {
-                    date = contract.dateSigned;
-                }
-            });
+        (tender.contracts || []).forEach(function(contract) {
+            var award_id = contract.awardID;
+            if (contract.status === 'active') {
+                (tender.awards || []).forEach(function(award) {
+                    if ((award.id === award_id) && (award.lotID === lot.id)) {
+                        var date = contract.date;
+                    }
+                });
+            }
         });
         return date;
     };
 
     function get_award_date_from_revs(tender, lot_id) {
+        var date = '';
         if (!lot_id) {
-            tender.revisions.forEach(function(rev) {
-                rev.changes.forEach(function(change) {
-                    if (('awards'.indexOf(change.path) !== -1) && (change.op === 'add')) {
-                        date = rev.date;
-                    }
+            (tender.awards || []).forEach(function(award) {
+                if (award.status === 'active') {
+                    date = award.date;
+                }
+            })
+            if (!date) {
+                tender.revisions.forEach(function(rev) {
+                    rev.changes.forEach(function(change) {
+                        if (('awards'.indexOf(change.path) !== -1) && (change.op === 'add')) {
+                            date = rev.date;
+                        }
+                    });
                 });
-            });
+            }
         }
         else {
-            tender.revisions.forEach(function(rev) {
-                rev.changes.forEach(function(change) {
-                    if (('awards'.indexOf(change.path) !== -1) && (change.op === 'add') && (change.lotID === lot_id)) {
-                        date = rev.date;
-                    }
+            (tender.awards || []).forEach(function(award) {
+                if ((award.lotID === lot_id) && (award.status === 'active')) {
+                    date = award.date;
+                }
+            })
+            if (!date) {
+                tender.revisions.forEach(function(rev) {
+                    rev.changes.forEach(function(change) {
+                        if (('awards'.indexOf(change.path) !== -1) && (change.op === 'add') && (change.value.lotID === lot_id)) {
+                            date = rev.date;
+                        }
+                    });
                 });
-            });
+            }
         }
         return date;
     };
@@ -459,13 +476,13 @@ function(doc) {
         if (check_lot_status_v2(lot)) {
             if (type === 'belowThreshold')
                 {
-                    date = get_award_date_from_revs(tender, lot.id);
+                    var date = get_award_date_from_revs(tender, lot.id);
                     if (date) {
                         return date;
                     }
                 }
             else {
-                date = get_contract_date_for_lot(tender, lot);
+                var date = get_contract_date_for_lot(tender, lot);
                 if (date) {
                     return date;
                 }
@@ -473,7 +490,7 @@ function(doc) {
         }
     }
 
-    function find_tender_data (tender) {
+    function find_tender_data(tender) {
         if (startDate < new_alg_date) {
             var handler = new Handler(tender);
             if (handler.is_multilot) {
