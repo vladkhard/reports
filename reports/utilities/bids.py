@@ -33,9 +33,6 @@ class BidsUtility(BaseBidsUtility):
 
         if not self.initial_bids:
             use_audit = False
-        if startdate < "2016-04-01" and \
-                not self.bid_date_valid(bid):
-            return
         row = list(record.get(col, '') for col in self.headers[:-3])
         value = float(record.get(u'value', 0))
         if record[u'currency'] != u'UAH':
@@ -65,7 +62,7 @@ class BidsUtility(BaseBidsUtility):
                               'Use initial bid date from revisions'.format(record.get('tender')))
             initial_bid_date = record.get('initialDate', '')
             self.Logger.info('Initial date from revisions {}'.format(initial_bid_date))
-        row.append(self.get_payment(value, initial_bid_date > self.threshold_date))
+        row.append(self.get_payment(value))
         row.append(state)
         self.Logger.info(
             "Bill {} for tender {} with value {}".format(

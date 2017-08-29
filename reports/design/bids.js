@@ -69,7 +69,8 @@ function(doc) {
     var is_multilot = ( "lots" in doc )?true:false;
     var type = doc.procurementMethodType;
     // Date of new algorithm
-    var new_date = '2017-08-15T00:00:00+03:00';
+    var new_date = '2017-08-09';
+    var thresholdDate = '2017-01-01';
 
     function max_date(obj) {
         //helper function to find max date in object
@@ -487,7 +488,7 @@ function(doc) {
                 }
             })
             }
-            else {
+            else if (startDate > thresholdDate){
                 if(is_multilot) {
                     (bids || []).forEach(function(bid) {
                         var init_date = find_initial_bid_date(tender.revisions || [], tender.bids.indexOf(bid), bid.id);
