@@ -1,6 +1,6 @@
 import os
 import csv
-from reports.core import BaseTendersUtility
+from reports.core import BaseTendersUtility, NEW_ALG_DATE
 from reports.helpers import (
     value_currency_normalize
 )
@@ -22,7 +22,7 @@ class TendersUtility(BaseTendersUtility):
         status = record.get('status', '')
         lot_status = record.get('lot_status', '')
         date = record.get('startdate', '')
-        version = 2 if date > '2017-08-09' else 1
+        version = 2 if date > NEW_ALG_DATE else 1
         if lot:
             if ','.join([tender, lot]) in self.ignore:
                 self.Logger.info(

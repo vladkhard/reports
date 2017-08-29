@@ -1,6 +1,6 @@
 import os
 import csv
-from reports.core import BaseBidsUtility
+from reports.core import BaseBidsUtility, NEW_ALG_DATE
 from reports.helpers import (
     get_cmd_parser,
     value_currency_normalize
@@ -16,23 +16,11 @@ class BidsUtility(BaseBidsUtility):
 
     def row(self, record):
         startdate = record.get('startdate', '')
-        state = ''
-        version = 1 if startdate < "2017-08-09" else 2
+        version = 1 if startdate < NEW_ALG_DATE else 2
         date_terminated = record.get('date_terminated', '')
-        _state = record.get('state', '')
-        if version == 2:
-            if date_terminated:
-                state = _state
-            else:
-                state = 4
+        state = record.get('state', '')
         bid = record.get(u'bid', '')
         rate = None
-        use_audit = True
-        self.get_initial_bids(record.get('audits', ''),
-                              record.get('tender', ''))
-
-        if not self.initial_bids:
-            use_audit = False
         row = list(record.get(col, '') for col in self.headers[:-3])
         value = float(record.get(u'value', 0))
         if record[u'currency'] != u'UAH':
@@ -48,22 +36,9 @@ class BidsUtility(BaseBidsUtility):
             self.Logger.info(msg)
         r = str(rate) if rate else ''
         row.append(r)
-        if use_audit:
-            initial_bid = [b for b in self.initial_bids
-                           if b['bidder'] == bid]
-            if not initial_bid:
-                initial_bid_date = record.get('initialDate', '')
-            else:
-                initial_bid_date = initial_bid[0]['date']
-
-        else:
-            self.Logger.fatal('Unable to load initial bids'
-                              ' for tender id={} for audits.'
-                              'Use initial bid date from revisions'.format(record.get('tender')))
-            initial_bid_date = record.get('initialDate', '')
-            self.Logger.info('Initial date from revisions {}'.format(initial_bid_date))
         row.append(self.get_payment(value))
-        row.append(state)
+        if state:
+            row.append(state)
         self.Logger.info(
             "Bill {} for tender {} with value {}".format(
                 row[-1], row[0], value

@@ -1,4 +1,4 @@
-from reports.core import BaseTendersUtility
+from reports.core import BaseTendersUtility, NEW_ALG_DATE
 from reports.helpers import (
     thresholds_headers,
     value_currency_normalize
@@ -20,7 +20,7 @@ class RefundsUtility(BaseTendersUtility):
         status = record.get('status', '')
         lot_status = record.get('lot_status', '')
         initial_date = record.get('startdate', '')
-        version = 2 if initial_date > '2017-08-09' else 1
+        version = 2 if initial_date > NEW_ALG_DATE else 1
 
         if lot:
             if ','.join([tender, lot]) in self.ignore:
