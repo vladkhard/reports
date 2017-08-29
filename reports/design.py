@@ -9,6 +9,7 @@ with open(os.path.join(basepath, 'design/bids.js')) as bids_file:
 with open(os.path.join(basepath, 'design/tenders.js')) as tenders_file:
     tenders = tenders_file.read()
 
+
 bids_owner_date = couchdb.design.ViewDefinition(
     'report', 'bids_owner_date', bids
 )
