@@ -66,7 +66,7 @@ class TendersUtility(BaseTendersUtility):
 
     def write_csv(self):
         second_version = []
-        splitter = [u'after 2017-08-09']
+        splitter = [u'after {}'.format(NEW_ALG_DATE)]
         if not self.headers:
             raise ValueError
         if not os.path.exists(os.path.dirname(os.path.abspath(self.put_path))):

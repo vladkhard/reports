@@ -44,7 +44,7 @@ function(doc) {
     var tender_status = doc.status;
     var tenderID = doc.tenderID;
     var datemodified = doc.dateModified;
-    var new_alg_date = '2017-08-09';
+    var new_alg_date = '2017-08-16';
 
 
     function count_lot_bids(lot, bids) {

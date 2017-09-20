@@ -23,7 +23,7 @@ from reports.helpers import get_cmd_parser, create_db_url, Kind, Status
 views = [bids_owner_date, tenders_owner_date]
 
 requests_cache.install_cache('audit_cache')
-NEW_ALG_DATE = "2017-08-09"
+NEW_ALG_DATE = "2017-08-16"
 
 
 class BaseUtility(object):
