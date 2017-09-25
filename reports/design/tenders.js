@@ -408,30 +408,48 @@ function(doc) {
         return date;
     }
 
-    function get_award_date(tender) {
+    function get_award_date_from_revs(tender, award_indx) {
+        var revisions = tender.revisions.reverse();
+        var path = '/awards/' + award_indx + '/status';
         var date = '';
-        (tender.awards || []).forEach(function(award) {
-            if (award.status === 'active') {
-                date = award.date;
-            } else if (award.status === 'cancelled') {
-                date = award.complaintPeriod.startdate;
-            }
+        revisions.forEach(function(rev) {
+            rev.changes.forEach(function(change) {
+                if (change.path === path && change.op === 'replace' && change.value === 'active') {
+                    date = rev.date;
+                }
+            });
         });
         return date;
     }
 
+    function get_award_date(tender) {
+        var dates = [];
+        var award_indx = 0;
+        (tender.awards || []).forEach(function(award) {
+            if (award.status === 'active') {
+                dates.push(award.date);
+            } else if (award.status === 'cancelled') {
+                award_indx = award.indexOf(tender.awards);
+                dates.push(get_award_date_from_revs(tender, award_indx));
+            }
+        });
+        return dates.sort()[0];
+    }
+
     function get_award_date_for_lot(tender, lot) {
-        var date = '';
+        var dates = [];
+        var award_indx = 0;
         (tender.awards || []).forEach(function(award) {
             if (award.lotID === lot.id) {
                 if (award.status === 'active') {
-                    date = award.date;
+                    dates.push(award.date);
                 } else if (award.status === 'cancelled'){
-                    date = award.complaintPeriod.startdate;
+                    award_indx = award.indexOf(tender.awards);
+                    dates.push(get_award_date_from_revs(tender, award_indx));
                 }
             }
         });
-        return date;
+        return dates.sort()[0];
     }
 
 
