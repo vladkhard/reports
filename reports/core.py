@@ -14,13 +14,14 @@ from requests.exceptions import RequestException
 from yaml.scanner import ScannerError
 from dateutil.parser import parse
 from config import Config
-from design import bids_owner_date, tenders_owner_date
+from design import bids_owner_date, tenders_owner_date, jsonpatch
 from couchdb.design import ViewDefinition
 from logging import getLogger
 from reports.helpers import get_cmd_parser, create_db_url, Kind, Status
 
 
-views = [bids_owner_date, tenders_owner_date]
+views = [bids_owner_date, tenders_owner_date, jsonpatch]
+
 
 requests_cache.install_cache('audit_cache')
 NEW_ALG_DATE = "2017-08-16"

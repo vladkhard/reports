@@ -1,5 +1,5 @@
 function(doc) {
-
+    var jsp = require('views/lib/map');
     if (doc.doc_type !== "Tender") {return;}
     function find_first_revision_date(doc) {
         if ((typeof doc.revisions === 'undefined') || (doc.revisions.length === 0)) {
@@ -408,65 +408,64 @@ function(doc) {
         return date;
     }
 
-    function get_award_date_from_revs(tender, award_indx) {
-        var revisions = tender.revisions.reverse();
-        var path = '/awards/' + award_indx + '/status';
-        var date = '';
-        revisions.forEach(function(rev) {
-            rev.changes.forEach(function(change) {
-                if (change.path === path && change.op === 'replace' && change.value === 'active') {
-                    date = rev.date;
-                }
-            });
-        });
-        return date;
-    }
-
-    function get_award_date(tender) {
-        var dates = [];
-        var award_indx = 0;
-        (tender.awards || []).forEach(function(award) {
-            if (award.status === 'active') {
-                dates.push(award.date);
-            } else if (award.status === 'cancelled') {
-                award_indx = award.indexOf(tender.awards);
-                dates.push(get_award_date_from_revs(tender, award_indx));
-            }
-        });
-        return dates.sort()[0];
-    }
-
-    function get_award_date_for_lot(tender, lot) {
-        var dates = [];
-        var award_indx = 0;
-        (tender.awards || []).forEach(function(award) {
-            if (award.lotID === lot.id) {
-                if (award.status === 'active') {
-                    dates.push(award.date);
-                } else if (award.status === 'cancelled'){
-                    award_indx = award.indexOf(tender.awards);
-                    dates.push(get_award_date_from_revs(tender, award_indx));
+    function get_first_award_date(tender) {
+        var revs = tender.revisions.slice().reverse().slice(0, tender.revisions.length - 1);
+        var tender = JSON.parse(JSON.stringify(tender));
+        var date = 'date';
+        for (var i = 0; i < revs.length; i++) {
+            prev = jsp.apply(tender, revs[i].changes);
+            if (!('awards' in prev)) {
+                break;
+            } else {
+                for (var j = 0; j < prev.awards.length; j++) {
+                    if (prev.awards[j].status === 'active') {
+                        date = (date > prev.awards[j].date) ? prev.awards[j].date : date;
+                    }
                 }
             }
-        });
-        return dates.sort()[0];
+        }
+        if (date !== 'date') {
+            return date;
+        }
     }
 
 
-    function tender_date_v2(tender) {
+    function get_first_award_date_for_lot(tender, lot) {
+        var revs = tender.revisions.slice().reverse().slice(0, tender.revisions.length - 1);
+        var tender = JSON.parse(JSON.stringify(tender));
+        var date = 'date';
+        for (var i = 0; i < revs.length; i++) {
+            prev = jsp.apply(tender, revs[i].changes);
+            if (!('awards' in prev)) {
+                break;
+            } else {
+                for (var j = 0; j < prev.awards.length; j++) {
+                    if ((prev.awards[j].status === 'active') && (prev.awards[j].lotID === lot.id)) {
+                        date = (date > prev.awards[j].date) ? prev.awards[j].date : date;
+                    }
+                }
+            }
+        }
+        if (date !== 'date') {
+            return date;
+        }
+    }
+
+
+    function tender_date_new_alg(tender) {
         var type = tender.procurementMethodType;
-        if ('belowThreshold'.indexOf(type) !== -1) {
-            return get_award_date(tender);
+        if ('belowThreshold' === type) {
+            return get_first_award_date(tender);
         } else {
             return get_contract_date(tender);
         }
     }
 
 
-    function lot_date_v2(tender, lot) {
+    function lot_date_new_alg(tender, lot) {
         var type = tender.procurementMethodType;
-        if ('belowThreshold'.indexOf(type) === -1) {
-            return get_award_date_for_lot(tender, lot);
+        if ('belowThreshold' === type) {
+            return get_first_award_date_for_lot(tender, lot);
         } else {
             return get_contract_date_for_lot(tender, lot);
         }
@@ -500,13 +499,13 @@ function(doc) {
         } else {
             if ('lots' in tender) {
                 tender.lots.forEach(function(lot) {
-                    var date_opened = lot_date_v2(tender, lot);
+                    var date_opened = lot_date_new_alg(tender, lot);
                     if (date_opened) {
                         emitter.lot(lot, date_opened);
                     }
                 });
             } else {
-                var date_opened = tender_date_v2(tender);
+                var date_opened = tender_date_new_alg(tender);
                 if (date_opened) {
                     emitter.tender(tender, date_opened);
                 }
