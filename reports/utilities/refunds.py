@@ -82,7 +82,7 @@ class RefundsUtility(BaseTendersUtility):
             self.payments_before,
             self.counter_before,
             [c * v for c, v in zip(self.counter_before, self.payments_before)],
-            ['after 2017-08-09'],
+            ['after {}'.format(NEW_ALG_DATE)],
             self.payments,
             self.new_counter,
             [c * v for c, v in zip(self.new_counter, self.payments)],
