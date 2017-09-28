@@ -20,7 +20,7 @@ from logging import getLogger
 from reports.helpers import get_cmd_parser, create_db_url, Kind, Status
 
 
-views = [bids_owner_date, tenders_owner_date, jsonpatch]
+views = [bids_owner_date, tenders_owner_date]
 
 
 requests_cache.install_cache('audit_cache')
@@ -102,6 +102,7 @@ class BaseUtility(object):
             'jsonpatch': jsonpatch
         }
         self.adb.save(original)
+        ViewDefinition.sync_many(self.adb, views)
 
     def get_response(self):
         self._sync_views()
