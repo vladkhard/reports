@@ -95,8 +95,7 @@ function(doc) {
 
     function date_normalize(date) {
         //return date in UTC format
-	var d = (typeof date === 'object') ? date : (new Date(date));
-        return d.toISOString().slice(0, 23);
+	var d = ( (typeof date === 'object') ? date : (new Date(date)) ).toISOString().slice(0, 23);
     }
 
     function find_complaint_date(complaints) {
@@ -438,9 +437,11 @@ function(doc) {
         if (statuses.length > 0) {
             var active_awards = (tender.awards || [] ).filter(function(awa) {
                 if ((( awa.status || "" ) === "active")) {
-                    return awa.date;
+                    return true;
                 }
-            });
+	    }).map(function (aw) {
+		return aw.date;
+	    });
             if (active_awards.length > 0 ) {
                 var min_date = ( active_awards.length === 1 ) ? active_awards[0] : active_awards.reduce(function(prev_date, curr_date) {
                             return ( prev_date > curr_date ) ? curr_date : prev_date;
@@ -486,9 +487,11 @@ function(doc) {
         if (statuses.length > 0) {
             var active_awards = ( tender.awards || [] ).filter(function(awa) {
                 if ((( awa.status || "" ) === "active") && ((awa.lotID || "") === lot.id)) {
-                    return awa.date;
+                    return true;
                 }
-            });
+	    }).map(function(aw) {
+		    return aw.date;
+	    });
             if (active_awards.length > 0) {
                 var min_date = (active_awards.length === 1) ? active_awards[0] : active_awards.reduce(function(prev_date, curr_date) {
                     return ( prev_date > curr_date ) ? curr_date : prev_date;
