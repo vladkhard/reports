@@ -137,14 +137,14 @@ function(doc) {
 		if ('awards' in tender) {
 			return true;
 		} else {
-			return check_bids_from_bt_atu(tender, lot);
+			return check_bids_from_bt_atu(tender, "");
 		}
         }
     }
 
     function check_bids_from_bt_atu(tender, lot) {
 	    if (type === 'aboveThresholdUA') {
-		var bids_n = count_lot_bids(lot, tender);
+		var bids_n = 0;
 		if ('lots' in tender) {
 		    bids_n = count_lot_bids(lot, tender);
 		} else {
