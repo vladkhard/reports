@@ -1,4 +1,6 @@
-from reports.core import BaseTendersUtility
+import os
+import csv
+from reports.core import BaseTendersUtility, NEW_ALG_DATE
 from reports.helpers import (
     value_currency_normalize
 )
@@ -19,6 +21,8 @@ class TendersUtility(BaseTendersUtility):
         lot = record.get('lot', '')
         status = record.get('status', '')
         lot_status = record.get('lot_status', '')
+        date = record.get('startdate', '')
+        version = 2 if date > NEW_ALG_DATE else 1
         if lot:
             if ','.join([tender, lot]) in self.ignore:
                 self.Logger.info(
@@ -31,10 +35,10 @@ class TendersUtility(BaseTendersUtility):
                     'Skip tender {} by ignore list'.format(tender)
                 )
                 return
-        if record.get('kind') not in self.kinds:
+        if record.get('kind') not in self.kinds and version == 1:
             self.Logger.info('Skip tender {} by kind'.format(tender))
             return
-        if self.check_status(status, lot_status):
+        if self.check_status(status, lot_status) and version == 1:
             self.Logger.info('Skip tender {} by status {}'.format(tender, status))
             return
         row = list(record.get(col, '') for col in self.headers[:-2])
@@ -58,13 +62,33 @@ class TendersUtility(BaseTendersUtility):
                 row[-1], row[0], value
             )
         )
-        return row
+        return row, version
+
+    def write_csv(self):
+        second_version = []
+        splitter = [u'after {}'.format(NEW_ALG_DATE)]
+        if not self.headers:
+            raise ValueError
+        if not os.path.exists(os.path.dirname(os.path.abspath(self.put_path))):
+            os.makedirs(os.path.dirname(os.path.abspath(self.put_path)))
+        with open(self.put_path, 'w') as out_file:
+            writer = csv.writer(out_file)
+            writer.writerow(self.headers)
+            for row, ver in self.rows():
+                if ver == 1:
+                    writer.writerow(row)
+                else:
+                    second_version.append(row)
+            if second_version:
+                writer.writerow(splitter)
+                for row in second_version:
+                    writer.writerow(row)
 
     def rows(self):
         for resp in self.response:
-            r = self.row(resp['value'])
+            r, ver = self.row(resp['value'])
             if r:
-                yield r
+                yield r, ver
 
 
 def run():

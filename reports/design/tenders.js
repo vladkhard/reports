@@ -1,5 +1,5 @@
 function(doc) {
-
+    var jsp = require('views/lib/jsonpatch');
     if (doc.doc_type !== "Tender") {return;}
     function find_first_revision_date(doc) {
         if ((typeof doc.revisions === 'undefined') || (doc.revisions.length === 0)) {
@@ -44,6 +44,7 @@ function(doc) {
     var tender_status = doc.status;
     var tenderID = doc.tenderID;
     var datemodified = doc.dateModified;
+    var new_alg_date = '2017-08-16T00:00:01';
 
 
     function count_lot_bids(lot, bids) {
@@ -94,7 +95,7 @@ function(doc) {
 
     function date_normalize(date) {
         //return date in UTC format
-        return ((typeof date === 'object') ? date : (new Date(date))).toISOString().slice(0, 23);
+	return ( (typeof date === 'object') ? date : (new Date(date)) ).toISOString().slice(0, 23);
     }
 
     function find_complaint_date(complaints) {
@@ -340,7 +341,7 @@ function(doc) {
                 }
         }
         return false;
-    };
+    }
 
     function check_tender(tender) {
         switch (tender.procurementMethodType) {
@@ -378,34 +379,190 @@ function(doc) {
                 return false;
         }
         return false;
-    };
+    }
+
+    function get_contract_date(tender) {
+        var date = '';
+        (tender.contracts || []).forEach(function(contract) {
+            if (contract.status === 'active') {
+                date = contract.date;
+            }
+        });
+        return date;
+    }
+
+    function get_contract_date_for_lot(tender, lot) {
+        var date = '';
+        (tender.contracts || []).forEach(function(contract) {
+            var award_id = contract.awardID;
+            if (contract.status === 'active') {
+                (tender.awards || []).forEach(function(award) {
+                    if (award_id === award.id) {
+                        if (award.lotID === lot.id) {
+                            date = contract.date;
+                        }
+                    }
+                });
+            }
+        });
+        return date;
+    }
+
+    function get_first_award_date(tender) {
+        var statuses = ( tender.awards  || [] ).filter(function(awd) {
+		return (["cancelled", "unsuccessful"].indexOf(awd.status) === -1);
+        }).map(function(awd) { return awd.status; });
+        var find_date_from_revisions = function(original_tender) {
+            var revs = original_tender.revisions.slice().reverse().slice(0, original_tender.revisions.length - 1);
+            var tender = JSON.parse(JSON.stringify(original_tender));
+            var date = 'date';
+            for (var i = 0; i < revs.length; i++) {
+                prev = jsp.apply(tender, revs[i].changes);
+                if (!('awards' in prev)) {
+                    break;
+                } else {
+                for (var j = 0; j < prev.awards.length; j++) {
+                    if (prev.awards[j].status === 'active') {
+                        date = (date > prev.awards[j].date) ? prev.awards[j].date : date;
+                        }
+                    }
+                }
+            }
+            if (date !== 'date') {
+                return date;
+            }
+        };
+        if (statuses.length > 0) {
+            var active_awards = (tender.awards || [] ).filter(function(awa) {
+                if ((( awa.status || "" ) === "active")) {
+                    return true;
+                }
+	    }).map(function (aw) {
+		return aw.date;
+	    });
+            if (active_awards.length > 0 ) {
+                var min_date = ( active_awards.length === 1 ) ? active_awards[0] : active_awards.reduce(function(prev_date, curr_date) {
+                            return ( prev_date > curr_date ) ? curr_date : prev_date;
+                        });
+		if (min_date) {
+			return min_date;
+		}
+            } else {
+                return find_date_from_revisions(tender);
+            }
+        } else {
+          return find_date_from_revisions(tender);
+        }
+    }
+
+
+    function get_first_award_date_for_lot(tender, lot) {
+	    var statuses = ( tender.awards  || [] ).filter(function(awd) {
+		    return (["cancelled", "unsuccessful"].indexOf(awd.status) === -1);
+	    }).map(function(aw) { return aw.date });
+	    var find_date_from_revisions = function(original_tender, lot) {
+		    var revs = original_tender.revisions.slice().reverse().slice(0, original_tender.revisions.length - 1);
+		    var tender = JSON.parse(JSON.stringify(original_tender));
+		    var date = 'date';
+		    for (var i = 0; i < revs.length; i++) {
+			prev = jsp.apply(tender, revs[i].changes);
+			if (!('awards' in prev)) {
+			    break;
+			} else {
+			    for (var j = 0; j < prev.awards.length; j++) {
+				if ((prev.awards[j].status === 'active') && (prev.awards[j].lotID === lot.id)) {
+				    date = (date > prev.awards[j].date) ? prev.awards[j].date : date;
+				}
+			    }
+			}
+		    }
+		    if (date !== 'date') {
+			return date;
+		    }
+        };
+        if (statuses.length > 0) {
+            var active_awards = ( tender.awards || [] ).filter(function(awa) {
+                if ((( awa.status || "" ) === "active") && ((awa.lotID || "") === lot.id)) {
+                    return true;
+                }
+	    }).map(function(aw) {
+		    return aw.date;
+	    });
+            if (active_awards.length > 0) {
+                var min_date = (active_awards.length === 1) ? active_awards[0] : active_awards.reduce(function(prev_date, curr_date) {
+                    return ( prev_date > curr_date ) ? curr_date : prev_date;
+                    });
+		if (min_date) {
+			return min_date;
+		}
+            } else {
+                return find_date_from_revisions(tender, lot);
+            }
+        } else {
+            return find_date_from_revisions(tender, lot);
+        }
+    }
+
+
+    function tender_date_new_alg(tender) {
+        var type = tender.procurementMethodType;
+        if ('belowThreshold' === type) {
+            return get_first_award_date(tender);
+        } else {
+            return get_contract_date(tender);
+        }
+    }
+
+
+    function lot_date_new_alg(tender, lot) {
+        var type = tender.procurementMethodType;
+        if ('belowThreshold' === type) {
+            return get_first_award_date_for_lot(tender, lot);
+        } else {
+            return get_contract_date_for_lot(tender, lot);
+        }
+    }
 
 
     function find_tender_data (tender) {
-        var handler = new Handler(tender);
-        if (handler.is_multilot) {
-            tender.lots.forEach(function(lot){
-                if (check_lot(lot, tender)) {
-                    var lot_handler = new lotHandler(lot, tender);
-                    if (lot_handler.lot_date !== null) {
-                        emitter.lot(lot, lot_handler.lot_date);
+        if (startDate < new_alg_date) {
+            var handler = new Handler(tender);
+            if (handler.is_multilot) {
+                tender.lots.forEach(function(lot){
+                    if (check_lot(lot, tender)) {
+                        var lot_handler = new lotHandler(lot, tender);
+                        if (lot_handler.lot_date !== null) {
+                            emitter.lot(lot, lot_handler.lot_date);
+                        }
+                    }
+                });
+
+            } else {
+
+                if (check_tender(tender)) {
+                    if (tender.status === 'cancelled') {
+                        if (handler.tender_date < handler.bids_disclosure_standstill) { return; }
+                    }
+                    if (handler.tender_date !==  null) {
+                        emitter.tender(tender, handler.tender_date);
                     }
                 }
-            });
-
+            }
         } else {
-
-            if (check_tender(tender)) {
-                if (tender.status === 'cancelled') {
-                    if (handler.tender_date < handler.bids_disclosure_standstill) { return; }
-                }
-                if (handler.tender_date !==  null) {
-                    emitter.tender(tender, handler.tender_date);
+            if ('lots' in tender) {
+                tender.lots.forEach(function(lot) {
+                    var date_opened = lot_date_new_alg(tender, lot);
+                    if (date_opened) {
+                        emitter.lot(lot, date_opened);
+                    }
+                });
+            } else {
+                var date_opened = tender_date_new_alg(tender);
+                if (date_opened) {
+                    emitter.tender(tender, date_opened);
                 }
             }
         }
-    };
-
+    }
     find_tender_data(doc);
 }// end function
-
