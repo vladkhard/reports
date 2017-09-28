@@ -436,8 +436,8 @@ function(doc) {
         };
         if (statuses.length > 0) {
             var active_awards = (tender.awards || [] ).filter(function(awa) {
-                if ((( award.status || "" ) === "active")) {
-                    return award.date;
+                if ((( awa.status || "" ) === "active")) {
+                    return awa.date;
                 }
             });
             if (active_awards.length > 0 ) {
@@ -484,8 +484,8 @@ function(doc) {
         }
         if (statuses.length > 0) {
             var active_awards = ( tender.awards || [] ).filter(function(awa) {
-                if ((( award.status || "" ) === "active") && ((award.lotID || "") === lot.id)) {
-                    return award.date;
+                if ((( awa.status || "" ) === "active") && ((awa.lotID || "") === lot.id)) {
+                    return awa.date;
                 }
             });
             if (active_awards.length > 0) {
