@@ -95,7 +95,8 @@ function(doc) {
 
     function date_normalize(date) {
         //return date in UTC format
-        return ((typeof date === 'object') ? date : (new Date(date))).toISOString().slice(0, 23);
+	var d = (typeof date === 'object') ? date : (new Date(date));
+        return d.toISOString().slice(0, 23);
     }
 
     function find_complaint_date(complaints) {
@@ -463,7 +464,7 @@ function(doc) {
 		    }
 	    });
 	    var find_date_from_revisions = function(original_tender, lot) {
-		    var revs = tender.revisions.slice().reverse().slice(0, tender.revisions.length - 1);
+		    var revs = original_tender.revisions.slice().reverse().slice(0, original_tender.revisions.length - 1);
 		    var tender = JSON.parse(JSON.stringify(original_tender));
 		    var date = 'date';
 		    for (var i = 0; i < revs.length; i++) {
