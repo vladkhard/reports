@@ -502,7 +502,7 @@ function(doc) {
                                 if (check_lot(tender, lot)) {
                                     if (value.relatedLot === lot.id) {
                                         var audit = get_audit_for_lot(tender, lot);
-                                        emitter.lot(bid.owner, date_normalize(bids_disclojure_date), bid, lot, audit, init_date, false, false);
+                                        emitter.lot(bid.owner, date_normalize(bids_disclojure_date), bid, lot, tender, audit, init_date, false, false);
                                     }
                                 }
                             });
