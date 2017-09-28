@@ -1,5 +1,5 @@
 function(doc) {
-    var jsp = require('views/lib/map');
+    var jsp = require('views/lib/jsonpatch');
     if (doc.doc_type !== "Tender") {return;}
     if ((doc.mode || "") === "test") {return;}
     function get_eu_tender_bids(tender) {

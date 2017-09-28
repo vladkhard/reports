@@ -10,15 +10,11 @@ with open(os.path.join(basepath, 'design/tenders.js')) as tenders_file:
     tenders = tenders_file.read()
 
 with open(os.path.join(basepath, 'design/jsonpatch.js')) as jsonp:
-    jp = jsonp.read()
+    jsonpatch = jsonp.read()
 
 bids_owner_date = couchdb.design.ViewDefinition(
     'report', 'bids_owner_date', bids
 )
 tenders_owner_date = couchdb.design.ViewDefinition(
     'report', 'tenders_owner_date', tenders
-)
-
-jsonpatch = couchdb.design.ViewDefinition(
-    'report', 'lib', jp
 )

@@ -14,7 +14,7 @@ from requests.exceptions import RequestException
 from yaml.scanner import ScannerError
 from dateutil.parser import parse
 from config import Config
-from design import bids_owner_date, tenders_owner_date, jsonpatch
+from design import bids_owner_date, tenders_owner_date, jsonpatch,
 from couchdb.design import ViewDefinition
 from logging import getLogger
 from reports.helpers import get_cmd_parser, create_db_url, Kind, Status
@@ -94,6 +94,11 @@ class BaseUtility(object):
         return p[-1]
 
     def _sync_views(self):
+        _id = '_design/report/_view/lib/jsonpatch'
+        if _id in self.adb:
+            orig = self.adb[_id]
+            orig.update(jsonpatch)
+        self.adb[_id] = jsonpatch
         ViewDefinition.sync_many(self.adb, views)
 
     def get_response(self):

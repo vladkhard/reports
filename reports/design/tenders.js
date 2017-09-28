@@ -1,5 +1,5 @@
 function(doc) {
-    var jsp = require('views/lib/map');
+    var jsp = require('views/lib/jsonpatch');
     if (doc.doc_type !== "Tender") {return;}
     function find_first_revision_date(doc) {
         if ((typeof doc.revisions === 'undefined') || (doc.revisions.length === 0)) {
