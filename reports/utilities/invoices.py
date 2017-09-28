@@ -63,7 +63,7 @@ class InvoicesUtility(BaseBidsUtility):
             self.counters[3],
             self.counters[4],
             self.payments,
-            [c * v for c, v in zip(self.counters[4], self.payments_before)],
+            [c * v for c, v in zip(self.counters[4], self.payments)],
         ]:
             yield row
 
