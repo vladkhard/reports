@@ -448,10 +448,10 @@ function(doc) {
                     return min_date;
                 }
             } else {
-                return find_date_from_revisions(tender, lot);
+                return find_date_from_revisions(tender);
             }
         } else {
-          return find_date_from_revisions(tender, lot);
+          return find_date_from_revisions(tender);
         }
     }
 
@@ -461,27 +461,27 @@ function(doc) {
 		    if (["cancelled", "unsuccessful"].indexOf(awd.status) === -1) {
 			return awd.status;
 		    }
-	    })
-	    var find_date_from_revisions = function(tender, lot) {
-            var revs = tender.revisions.slice().reverse().slice(0, tender.revisions.length - 1);
-            var tender = JSON.parse(JSON.stringify(tender));
-            var date = 'date';
-            for (var i = 0; i < revs.length; i++) {
-                prev = jsp.apply(tender, revs[i].changes);
-                if (!('awards' in prev)) {
-                    break;
-                } else {
-                    for (var j = 0; j < prev.awards.length; j++) {
-                        if ((prev.awards[j].status === 'active') && (prev.awards[j].lotID === lot.id)) {
-                            date = (date > prev.awards[j].date) ? prev.awards[j].date : date;
-                        }
-                    }
-                }
-            }
-            if (date !== 'date') {
-                return date;
-            }
-        }
+	    });
+	    var find_date_from_revisions = function(original_tender, lot) {
+		    var revs = tender.revisions.slice().reverse().slice(0, tender.revisions.length - 1);
+		    var tender = JSON.parse(JSON.stringify(original_tender));
+		    var date = 'date';
+		    for (var i = 0; i < revs.length; i++) {
+			prev = jsp.apply(tender, revs[i].changes);
+			if (!('awards' in prev)) {
+			    break;
+			} else {
+			    for (var j = 0; j < prev.awards.length; j++) {
+				if ((prev.awards[j].status === 'active') && (prev.awards[j].lotID === lot.id)) {
+				    date = (date > prev.awards[j].date) ? prev.awards[j].date : date;
+				}
+			    }
+			}
+		    }
+		    if (date !== 'date') {
+			return date;
+		    }
+        };
         if (statuses.length > 0) {
             var active_awards = ( tender.awards || [] ).filter(function(awa) {
                 if ((( awa.status || "" ) === "active") && ((awa.lotID || "") === lot.id)) {
