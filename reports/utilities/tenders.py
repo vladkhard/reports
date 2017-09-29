@@ -28,19 +28,19 @@ class TendersUtility(BaseTendersUtility):
                 self.Logger.info(
                     'Skip tender {} with lot {} by'
                     ' ignore list'.format(tender, lot))
-                return
+                return '', ''
         else:
             if '{},'.format(tender) in self.ignore:
                 self.Logger.info(
                     'Skip tender {} by ignore list'.format(tender)
                 )
-                return
+                return '', ''
         if record.get('kind') not in self.kinds and version == 1:
             self.Logger.info('Skip tender {} by kind'.format(tender))
-            return
+            return '', ''
         if self.check_status(status, lot_status) and version == 1:
             self.Logger.info('Skip tender {} by status {}'.format(tender, status))
-            return
+            return '', ''
         row = list(record.get(col, '') for col in self.headers[:-2])
         value = float(record.get(u'value', 0))
         if record[u'currency'] != u'UAH':
