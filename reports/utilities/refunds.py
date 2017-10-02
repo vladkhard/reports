@@ -74,10 +74,11 @@ class RefundsUtility(BaseTendersUtility):
             self.row(resp['value'])
 
         for row in [
+            ['before_2017'],
             self.payments_before,
             self.counter_before,
             [c * v for c, v in zip(self.counter_before, self.payments_before)],
-            ['' for _ in range(5)],
+            ["after 2017-01-01"],
             self.payments,
             self.counter,
             [c * v for c, v in zip(self.counter, self.payments)],
