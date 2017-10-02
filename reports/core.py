@@ -51,8 +51,8 @@ class BaseUtility(object):
                 self.end_date = self.convert_date(period[1])
         self.get_db_connection()
         self.Logger = getLogger(self.operation)
-        self.payments = self.config.payments(True)
-        self.payments_before = self.config.payments(False)
+        self.payments = self.config.payments(False)
+        self.payments_before = self.config.payments(True)
 
     def get_db_connection(self):
         host = self.config.get_option('db', 'host')
