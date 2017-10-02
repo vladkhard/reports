@@ -41,7 +41,7 @@ class InvoicesUtility(BaseBidsUtility):
         if version == 2:
             if date_terminated:
                 c = self.counters[3] if state == 3 else self.counters[2]
-            else:
+            elif state == 4:
                 c = self.counters[4]
         for i, x in enumerate(p):
             if payment == x:
