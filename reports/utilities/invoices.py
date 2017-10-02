@@ -57,7 +57,7 @@ class InvoicesUtility(BaseBidsUtility):
             self.counters[1],
             self.payments,
             [c * v for c, v in zip(self.counters[1], self.payments)],
-            ['after 2017-08-09'],
+            ['after_{}'.format(NEW_ALG_DATE)],
             [a + b + c for a, b, c in zip(self.counters[2], self.counters[3], self.counters[4])],
             self.counters[2],
             self.counters[3],
