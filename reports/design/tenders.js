@@ -1,5 +1,5 @@
 function(doc) {
-    var jsp = require('views/lib/map');
+    var jsp = require('views/lib/jsonpatch');
     if (doc.doc_type !== "Tender") {return;}
     function find_first_revision_date(doc) {
         if ((typeof doc.revisions === 'undefined') || (doc.revisions.length === 0)) {
@@ -95,7 +95,7 @@ function(doc) {
 
     function date_normalize(date) {
         //return date in UTC format
-        return ((typeof date === 'object') ? date : (new Date(date))).toISOString().slice(0, 23);
+	return ( (typeof date === 'object') ? date : (new Date(date)) ).toISOString().slice(0, 23);
     }
 
     function find_complaint_date(complaints) {
@@ -409,14 +409,12 @@ function(doc) {
     }
 
     function get_first_award_date(tender) {
-        var statuses = ( tender.awards  || [] ).map(function(awd) {
-            if (["cancelled", "unsuccessful"].indexOf(awd.status) === -1) {
-            return awd.status;
-            }
-        })
-        var find_date_from_revisions = function(tender) {
-            var revs = tender.revisions.slice().reverse().slice(0, tender.revisions.length - 1);
-            var tender = JSON.parse(JSON.stringify(tender));
+        var statuses = ( tender.awards  || [] ).filter(function(awd) {
+		return (["cancelled", "unsuccessful"].indexOf(awd.status) === -1);
+        }).map(function(awd) { return awd.status; });
+        var find_date_from_revisions = function(original_tender) {
+            var revs = original_tender.revisions.slice().reverse().slice(0, original_tender.revisions.length - 1);
+            var tender = JSON.parse(JSON.stringify(original_tender));
             var date = 'date';
             for (var i = 0; i < revs.length; i++) {
                 prev = jsp.apply(tender, revs[i].changes);
@@ -436,65 +434,67 @@ function(doc) {
         };
         if (statuses.length > 0) {
             var active_awards = (tender.awards || [] ).filter(function(awa) {
-                if ((( award.status || "" ) === "active")) {
-                    return award.date;
+                if ((( awa.status || "" ) === "active")) {
+                    return true;
                 }
-            });
+	    }).map(function (aw) {
+		return aw.date;
+	    });
             if (active_awards.length > 0 ) {
                 var min_date = ( active_awards.length === 1 ) ? active_awards[0] : active_awards.reduce(function(prev_date, curr_date) {
                             return ( prev_date > curr_date ) ? curr_date : prev_date;
                         });
-                if (typeof min_date !== "undefined" || min_date) {
-                    return min_date;
-                }
+		if (min_date) {
+			return min_date;
+		}
             } else {
-                return find_date_from_revisions(tender, lot);
+                return find_date_from_revisions(tender);
             }
         } else {
-          return find_date_from_revisions(tender, lot);
+          return find_date_from_revisions(tender);
         }
     }
 
 
     function get_first_award_date_for_lot(tender, lot) {
-	    var statuses = ( tender.awards  || [] ).map(function(awd) {
-		    if (["cancelled", "unsuccessful"].indexOf(awd.status) === -1) {
-			return awd.status;
+	    var statuses = ( tender.awards  || [] ).filter(function(awd) {
+		    return (["cancelled", "unsuccessful"].indexOf(awd.status) === -1);
+	    }).map(function(aw) { return aw.date });
+	    var find_date_from_revisions = function(original_tender, lot) {
+		    var revs = original_tender.revisions.slice().reverse().slice(0, original_tender.revisions.length - 1);
+		    var tender = JSON.parse(JSON.stringify(original_tender));
+		    var date = 'date';
+		    for (var i = 0; i < revs.length; i++) {
+			prev = jsp.apply(tender, revs[i].changes);
+			if (!('awards' in prev)) {
+			    break;
+			} else {
+			    for (var j = 0; j < prev.awards.length; j++) {
+				if ((prev.awards[j].status === 'active') && (prev.awards[j].lotID === lot.id)) {
+				    date = (date > prev.awards[j].date) ? prev.awards[j].date : date;
+				}
+			    }
+			}
 		    }
-	    })
-	    var find_date_from_revisions = function(tender, lot) {
-            var revs = tender.revisions.slice().reverse().slice(0, tender.revisions.length - 1);
-            var tender = JSON.parse(JSON.stringify(tender));
-            var date = 'date';
-            for (var i = 0; i < revs.length; i++) {
-                prev = jsp.apply(tender, revs[i].changes);
-                if (!('awards' in prev)) {
-                    break;
-                } else {
-                    for (var j = 0; j < prev.awards.length; j++) {
-                        if ((prev.awards[j].status === 'active') && (prev.awards[j].lotID === lot.id)) {
-                            date = (date > prev.awards[j].date) ? prev.awards[j].date : date;
-                        }
-                    }
-                }
-            }
-            if (date !== 'date') {
-                return date;
-            }
-        }
+		    if (date !== 'date') {
+			return date;
+		    }
+        };
         if (statuses.length > 0) {
             var active_awards = ( tender.awards || [] ).filter(function(awa) {
-                if ((( award.status || "" ) === "active") && ((award.lotID || "") === lot.id)) {
-                    return award.date;
+                if ((( awa.status || "" ) === "active") && ((awa.lotID || "") === lot.id)) {
+                    return true;
                 }
-            });
+	    }).map(function(aw) {
+		    return aw.date;
+	    });
             if (active_awards.length > 0) {
                 var min_date = (active_awards.length === 1) ? active_awards[0] : active_awards.reduce(function(prev_date, curr_date) {
                     return ( prev_date > curr_date ) ? curr_date : prev_date;
                     });
-                if (typeof min_date !== "undefined" || min_date) {
-                    return min_date;
-                }
+		if (min_date) {
+			return min_date;
+		}
             } else {
                 return find_date_from_revisions(tender, lot);
             }
