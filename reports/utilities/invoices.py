@@ -24,6 +24,8 @@ class InvoicesUtility(BaseBidsUtility):
         value = float(record.get("value", 0))
         bid = record.get(u"bid", '')
         state = record.get('state', '')
+        if state == 1:
+            return
         if record[u'currency'] != u'UAH':
             old = value
             value, rate = value_currency_normalize(
@@ -37,12 +39,9 @@ class InvoicesUtility(BaseBidsUtility):
             self.Logger.info(msg)
         payment = self.get_payment(value)
         p = self.payments
-        c = self.counters[1]
+        c = self.counters[state] if state else self.counters[1]
         if version == 2:
-            if date_terminated:
-                c = self.counters[3] if state == 3 else self.counters[2]
-            elif state == 4:
-                c = self.counters[4]
+            c = self.counters[state]
         for i, x in enumerate(p):
             if payment == x:
                 msg = 'Computated bill {} for value {} '\
