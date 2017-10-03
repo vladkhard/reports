@@ -22,7 +22,12 @@ class TendersUtility(BaseTendersUtility):
         status = record.get('status', '')
         lot_status = record.get('lot_status', '')
         date = record.get('startdate', '')
-        version = 2 if date > NEW_ALG_DATE else 1
+        if date < self.threshold_date:
+            version = 1
+        elif date > NEW_ALG_DATE:
+            version = 3
+        else:
+            version = 2
         if lot:
             if ','.join([tender, lot]) in self.ignore:
                 self.Logger.info(
@@ -35,10 +40,10 @@ class TendersUtility(BaseTendersUtility):
                     'Skip tender {} by ignore list'.format(tender)
                 )
                 return '', ''
-        if record.get('kind') not in self.kinds and version == 1:
+        if record.get('kind') not in self.kinds and version != 3:
             self.Logger.info('Skip tender {} by kind'.format(tender))
             return '', ''
-        if self.check_status(status, lot_status) and version == 1:
+        if self.check_status(status, lot_status) and version != 3:
             self.Logger.info('Skip tender {} by status {}'.format(tender, status))
             return '', ''
         row = list(record.get(col, '') for col in self.headers[:-2])
@@ -65,8 +70,12 @@ class TendersUtility(BaseTendersUtility):
         return row, version
 
     def write_csv(self):
+        is_added = False
         second_version = []
-        splitter = [u'after {}'.format(NEW_ALG_DATE)]
+        new_version = []
+        splitter_before = [u'before_2017']
+        splitter_after = [u'after_2017-01-01']
+        splitter_new = [u'after {}'.format(NEW_ALG_DATE)]
         if not self.headers:
             raise ValueError
         if not os.path.exists(os.path.dirname(os.path.abspath(self.put_path))):
@@ -76,12 +85,21 @@ class TendersUtility(BaseTendersUtility):
             writer.writerow(self.headers)
             for row, ver in self.rows():
                 if ver == 1:
+                    if not is_added:
+                        writer.writerow(splitter_before)
+                        is_added = True
                     writer.writerow(row)
-                else:
+                elif ver == 2:
                     second_version.append(row)
+                else:
+                    new_version.append(row)
             if second_version:
-                writer.writerow(splitter)
+                writer.writerow(splitter_after)
                 for row in second_version:
+                    writer.writerow(row)
+            if new_version:
+                writer.writerow(splitter_new)
+                for row in new_version:
                     writer.writerow(row)
 
     def rows(self):
