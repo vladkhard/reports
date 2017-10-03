@@ -14,7 +14,7 @@ class InvoicesUtility(BaseBidsUtility):
         )
         self.counters = {
             index: [0 for _ in range(0, 5)]
-            for index in range(1, 5)
+            for index in range(0, 5)
         }
 
     def row(self, record):
@@ -24,8 +24,6 @@ class InvoicesUtility(BaseBidsUtility):
         value = float(record.get("value", 0))
         bid = record.get(u"bid", '')
         state = record.get('state', '')
-        if state == 1:
-            return
         if record[u'currency'] != u'UAH':
             old = value
             value, rate = value_currency_normalize(
@@ -39,9 +37,7 @@ class InvoicesUtility(BaseBidsUtility):
             self.Logger.info(msg)
         payment = self.get_payment(value)
         p = self.payments
-        c = self.counters[state] if state else self.counters[1]
-        if version == 2:
-            c = self.counters[state]
+        c = self.counters[state] if state else self.counters[0]
         for i, x in enumerate(p):
             if payment == x:
                 msg = 'Computated bill {} for value {} '\
@@ -53,11 +49,11 @@ class InvoicesUtility(BaseBidsUtility):
         for resp in self.response:
             self.row(resp['value'])
         for row in [
-            self.counters[1],
+            self.counters[0],
             self.payments,
-            [c * v for c, v in zip(self.counters[1], self.payments)],
+            [c * v for c, v in zip(self.counters[0], self.payments)],
             ['after_{}'.format(NEW_ALG_DATE)],
-            [a + b + c for a, b, c in zip(self.counters[2], self.counters[3], self.counters[4])],
+            self.counters[1],
             self.counters[2],
             self.counters[3],
             self.counters[4],
