@@ -49,6 +49,7 @@ class InvoicesUtility(BaseBidsUtility):
         for resp in self.response:
             self.row(resp['value'])
         for row in [
+            ['after_2017-01-01'],
             self.counters[0],
             self.payments,
             [c * v for c, v in zip(self.counters[0], self.payments)],

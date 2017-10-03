@@ -56,6 +56,7 @@ class BidsUtility(BaseBidsUtility):
         with open(self.put_path, 'w') as out_file:
             writer = csv.writer(out_file)
             writer.writerow(self.headers)
+            writer.writerow(['after_2017-01-01'])
             for row, ver in self.rows():
                 if ver == 1:
                     writer.writerow(row)
