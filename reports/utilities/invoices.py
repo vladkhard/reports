@@ -14,7 +14,7 @@ class InvoicesUtility(BaseBidsUtility):
         )
         self.counters = {
             index: [0 for _ in range(0, 5)]
-            for index in range(1, 5)
+            for index in range(0, 5)
         }
 
     def row(self, record):
@@ -37,12 +37,7 @@ class InvoicesUtility(BaseBidsUtility):
             self.Logger.info(msg)
         payment = self.get_payment(value)
         p = self.payments
-        c = self.counters[1]
-        if version == 2:
-            if date_terminated:
-                c = self.counters[3] if state == 3 else self.counters[2]
-            else:
-                c = self.counters[4]
+        c = self.counters[state] if state else self.counters[0]
         for i, x in enumerate(p):
             if payment == x:
                 msg = 'Computated bill {} for value {} '\
@@ -54,11 +49,12 @@ class InvoicesUtility(BaseBidsUtility):
         for resp in self.response:
             self.row(resp['value'])
         for row in [
-            self.counters[1],
+            ['after_2017-01-01'],
+            self.counters[0],
             self.payments,
-            [c * v for c, v in zip(self.counters[1], self.payments)],
-            ['after 2017-08-09'],
-            [a + b + c for a, b, c in zip(self.counters[2], self.counters[3], self.counters[4])],
+            [c * v for c, v in zip(self.counters[0], self.payments)],
+            ['after_{}'.format(NEW_ALG_DATE)],
+            self.counters[1],
             self.counters[2],
             self.counters[3],
             self.counters[4],

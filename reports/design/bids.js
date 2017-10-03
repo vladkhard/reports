@@ -397,8 +397,8 @@ function(doc) {
 		if (lot) {
 			return check_award_for_bid_multilot(tender, bid, lot);
 		} else {
-            		return check_award_for_bid(tender, bid);
-		}
+                return check_award_for_bid(tender, bid);
+		    }
         }
     }
 
@@ -459,21 +459,26 @@ function(doc) {
 				if (check_lot_bids(tender, lot)) {
 					var audit = get_audit_for_lot(tender, lot);
 					var init_date = find_initial_bid_date(tender.revisions || [], tender.bids.indexOf(bid), bid.id);
-
-					emitter.lot(bid.owner, date_normalize(bids_disclojure_date), bid, lot, tender, audit, init_date, false, 1);
 					if (['unsuccessful', 'cancelled'].indexOf(lot.status) !== -1) {
 						if (check_award_and_qualification(tender, bid, lot)) {
 							var date_terminated = date_normalize(lot.date);
 							var state = (get_month(bids_disclojure_date) !== get_month(date_terminated)) ? 3: 2;
+                            if (state === 2) {
+                                emitter.lot(bid.owner, date_normalize(bids_disclojure_date), bid, lot, tender, audit, init_date, false, 1);
+                            }
 							emitter.lot(bid.owner, date_normalize(date_terminated), bid, lot, tender, audit, init_date, date_normalize(date_terminated), state);
 						}
 					} else if (['unsuccessful', 'cancelled'].indexOf(tender.status) !== -1) {
 						if (check_award_and_qualification(tender, bid, lot)) {
 							var date_terminated = date_normalize(tender.date);
 							var state = (get_month(bids_disclojure_date) !== get_month(date_terminated)) ? 3: 2;
+                            if (state === 2) {
+                                emitter.lot(bid.owner, date_normalize(bids_disclojure_date), bid, lot, tender, audit, init_date, false, 1);
+                            }
 							emitter.lot(bid.owner, date_normalize(date_terminated), bid, lot, tender, audit, init_date, date_normalize(date_terminated), state);
 						}
 					} else {
+                        emitter.lot(bid.owner, date_normalize(bids_disclojure_date), bid, lot, tender, audit, init_date, false, 1);
 						emitter.lot(bid.owner, date_normalize(bids_disclojure_date), bid, lot, tender, audit, init_date, false, 4);
 					}
 				}
@@ -482,8 +487,6 @@ function(doc) {
                     if (check_tender_bids(tender, bid)) {
                         var audits = get_audit_for_tender(tender);
                         var init_date = find_initial_bid_date(tender.revisions || [], tender.bids.indexOf(bid), bid.id);
-
-                        emitter.tender(bid.owner, date_normalize(bids_disclojure_date), bid, tender, audits, init_date, false, 1);
                         if ((tender.status === 'cancelled') && (tender.date > init_date)) {
                             return;
                         }
@@ -491,9 +494,13 @@ function(doc) {
                             var date_terminated = date_normalize(tender.date);
                             if (check_award_and_qualification(tender, bid, "")) {
                                 var state = (get_month(bids_disclojure_date) === get_month(date_terminated)) ? 2 : 3;
+                                if (state === 2) {
+                                    emitter.tender(bid.owner, date_normalize(bids_disclojure_date), bid, tender, audits, init_date, false, 1);
+                                }
                                 emitter.tender(bid.owner, date_normalize(date_terminated), bid, tender, audits, init_date, date_normalize(date_terminated), state);
                             }
                         } else {
+                            emitter.tender(bid.owner, date_normalize(bids_disclojure_date), bid, tender, audits, init_date, false, 1);
                             emitter.tender(bid.owner, date_normalize(bids_disclojure_date), bid, tender, audits, init_date, false, 4);
                         }
                     }

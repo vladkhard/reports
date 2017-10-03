@@ -53,8 +53,7 @@ class RefundsUtility(BaseTendersUtility):
                     record[u'startdate'], value, record['tender']
                 )
             self.Logger.info(msg)
-
-        before = initial_date > self.threshold_date
+        before = initial_date < self.threshold_date
         payment = self.get_payment(value, before)
         p = self.payments
         c = self.counter
@@ -75,13 +74,14 @@ class RefundsUtility(BaseTendersUtility):
             self.row(resp['value'])
 
         for row in [
-            self.payments,
-            self.counter,
-            [c * v for c, v in zip(self.counter, self.payments)],
-            ['' for _ in range(5)],
+            ['before_2017'],
             self.payments_before,
             self.counter_before,
             [c * v for c, v in zip(self.counter_before, self.payments_before)],
+            ["after 2017-01-01"],
+            self.payments,
+            self.counter,
+            [c * v for c, v in zip(self.counter, self.payments)],
             ['after {}'.format(NEW_ALG_DATE)],
             self.payments,
             self.new_counter,
