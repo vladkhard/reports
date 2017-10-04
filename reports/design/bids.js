@@ -404,7 +404,7 @@ function(doc) {
 
     var emitter = {
         lot: function(owner, date, bid, lot, tender, audits, init_date, date_terminated, state) {
-            emit([owner, date, bid.id, lot.id], {
+            emit([owner, date, bid.id, lot.id, state], {
                 tender: id,
                 lot: lot.id,
                 value: lot.value.amount,
@@ -422,7 +422,7 @@ function(doc) {
             });
         },
         tender: function(owner, date, bid, tender, audits, init_date, date_terminated, state){
-            emit([owner, date, bid.id], {
+            emit([owner, date, bid.id, state], {
                 tender: id,
                 value: tender.value.amount,
                 currency: tender.value.currency,
