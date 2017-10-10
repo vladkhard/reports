@@ -129,35 +129,36 @@ function(doc) {
         var type = tender.procurementMethodType;
         switch (type) {
             case 'aboveThresholdEU':
-		return ((tender.qualifications || []).length >= 2);
+		        return ((tender.qualifications || []).length >= 2);
             case 'competitiveDialogueEU':
 
 		return ((tender.qualifications || []).length >= 3);
             default:
-		if ('awards' in tender) {
-			return true;
-		} else {
-			return check_bids_from_bt_atu(tender, "");
-		}
+                if ('awards' in tender) {
+                    return true;
+                } else {
+                    return check_bids_from_bt_atu(tender, "");
+                }
         }
     }
 
     function check_bids_from_bt_atu(tender, lot) {
+        var type = tender.procurementMethodType;
 	    if (type === 'aboveThresholdUA') {
-		var bids_n = 0;
-		if ('lots' in tender) {
-		    bids_n = count_lot_bids(lot, tender);
-		} else {
-		    bids_n = tender.numberOfBids || 0;
-		}
-		if ( bids_n < 2) {
-		    return false;
-		}
+		    var bids_n = 0;
+            if ('lots' in tender) {
+                bids_n = count_lot_bids(lot, tender);
+            } else {
+                bids_n = tender.numberOfBids || 0;
+            }
+            if (bids_n < 2) {
+                return false;
+            }
 		return true;
-	    } else if (['belowThreshold', 'aboveThresholdUA.defense'] !== -1) {
-		return true;
+	    } else if (['belowThreshold', 'aboveThresholdUA.defense'].indexOf(type) !== -1) {
+		    return true;
 	    } else {
-		return false;
+		    return false;
 	    }
 	    return false;
     }
