@@ -122,9 +122,9 @@ function parse_notification() {
 
 function create_all_bids() {
     local brokers="$1"
-    cat $WORK_DIR/*@$START--$END-bids.csv | head -n 1 > "$WORK_DIR/all@$START--$END-bids.csv"
+    cat $WORK_DIR/*@$START--$END-bids.csv | head -n 1 | grep -v "^after" > "$WORK_DIR/all@$START--$END-bids.csv"
     for br in $brokers; do
-        sort "$WORK_DIR/$br@$START--$END-bids.csv" | head -n -1 >> "$WORK_DIR/all@$START--$END-bids.csv"
+        sort "$WORK_DIR/$br@$START--$END-bids.csv" | head -n -1 | grep -v "^after" >> "$WORK_DIR/all@$START--$END-bids.csv"
     done
 }
 function create_all_tenders_zip() {

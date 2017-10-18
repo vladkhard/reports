@@ -409,9 +409,9 @@ function(doc) {
     }
 
     function get_first_award_date(tender) {
-        var statuses = ( tender.awards  || [] ).filter(function(awd) {
-		return (["cancelled", "unsuccessful"].indexOf(awd.status) === -1);
-        }).map(function(awd) { return awd.status; });
+        var non_unsuccessful_aw = ( tender.awards  || [] ).filter(function(awd) {
+		    return (['unsuccessful', 'pending'].indexOf(awd.status) === -1);
+        });
         var find_date_from_revisions = function(original_tender) {
             var revs = original_tender.revisions.slice().reverse().slice(0, original_tender.revisions.length - 1);
             var tender = JSON.parse(JSON.stringify(original_tender));
@@ -432,34 +432,23 @@ function(doc) {
                 return date;
             }
         };
-        if (statuses.length > 0) {
-            var active_awards = (tender.awards || [] ).filter(function(awa) {
-                if ((( awa.status || "" ) === "active")) {
-                    return true;
-                }
-	    }).map(function (aw) {
-		return aw.date;
-	    });
-            if (active_awards.length > 0 ) {
-                var min_date = ( active_awards.length === 1 ) ? active_awards[0] : active_awards.reduce(function(prev_date, curr_date) {
-                            return ( prev_date > curr_date ) ? curr_date : prev_date;
-                        });
-		if (min_date) {
-			return min_date;
-		}
-            } else {
+        if (non_unsuccessful_aw.length > 0) {
+            if (non_unsuccessful_aw[0].status === 'cancelled') {
                 return find_date_from_revisions(tender);
             }
+            else {
+                return non_unsuccessful_aw[0].date;
+            }
         } else {
-          return find_date_from_revisions(tender);
+            return null;
         }
     }
 
 
     function get_first_award_date_for_lot(tender, lot) {
-	    var statuses = ( tender.awards  || [] ).filter(function(awd) {
-		    return (["cancelled", "unsuccessful"].indexOf(awd.status) === -1);
-	    }).map(function(aw) { return aw.date });
+	    var non_unsuccessful_aw = ( tender.awards  || [] ).filter(function(awd) {
+		    return (['unsuccessful', 'pending'].indexOf(awd.status) === -1);
+	    });
 	    var find_date_from_revisions = function(original_tender, lot) {
 		    var revs = original_tender.revisions.slice().reverse().slice(0, original_tender.revisions.length - 1);
 		    var tender = JSON.parse(JSON.stringify(original_tender));
@@ -470,36 +459,30 @@ function(doc) {
 			    break;
 			} else {
 			    for (var j = 0; j < prev.awards.length; j++) {
-				if ((prev.awards[j].status === 'active') && (prev.awards[j].lotID === lot.id)) {
-				    date = (date > prev.awards[j].date) ? prev.awards[j].date : date;
-				}
+                    if ((prev.awards[j].status === 'active') && (prev.awards[j].lotID === lot.id)) {
+                        date = (date > prev.awards[j].date) ? prev.awards[j].date : date;
+                    }
 			    }
 			}
 		    }
 		    if (date !== 'date') {
-			return date;
+			    return date;
 		    }
         };
-        if (statuses.length > 0) {
-            var active_awards = ( tender.awards || [] ).filter(function(awa) {
-                if ((( awa.status || "" ) === "active") && ((awa.lotID || "") === lot.id)) {
-                    return true;
+        if (non_unsuccessful_aw.length > 0) {
+            for_lot = non_unsuccessful_aw.filter(function(award) {
+                return (award.lotID === lot.id);
+            });
+            if (for_lot.length > 0) {
+                if (for_lot[0].status === 'cancelled') {
+                    return find_date_from_revisions(tender, lot);
                 }
-	    }).map(function(aw) {
-		    return aw.date;
-	    });
-            if (active_awards.length > 0) {
-                var min_date = (active_awards.length === 1) ? active_awards[0] : active_awards.reduce(function(prev_date, curr_date) {
-                    return ( prev_date > curr_date ) ? curr_date : prev_date;
-                    });
-		if (min_date) {
-			return min_date;
-		}
-            } else {
-                return find_date_from_revisions(tender, lot);
+                else {
+                    return for_lot[0].date;
+                }
             }
         } else {
-            return find_date_from_revisions(tender, lot);
+            return null;
         }
     }
 
