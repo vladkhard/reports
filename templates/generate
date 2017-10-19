@@ -160,7 +160,7 @@ function send_and_notify() {
             $BIN_DIR/send $NOTIFY_FLAG -f "$WORK_DIR/$broker@$START--$END-$BROKERS_FILE_PATTERN.zip" --timestamp $RUN_TIME
         fi
     else
-        if [[ "$broker" == *$NOTIFY_BROKERS* ]]; then
+        if [[ $NOTIFY_BROKERS == *"$broker"* ]]; then
             if [ "$broker" == "all" ]; then
                 $BIN_DIR/send $NOTIFY_FLAG -f "$WORK_DIR/all@$START--$END-tenders.zip" "$WORK_DIR/all@$START--$END-bids.zip" --timestamp $RUN_TIME
             else
