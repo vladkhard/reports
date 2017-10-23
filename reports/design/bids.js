@@ -483,9 +483,6 @@ function(doc) {
                     if (check_tender_bids(tender, bid)) {
                         var audits = get_audit_for_tender(tender);
                         var init_date = find_initial_bid_date(tender.revisions || [], tender.bids.indexOf(bid), bid.id);
-                        if ((tender.status === 'cancelled') && (tender.date > init_date)) {
-                            return;
-                        }
                         if ((['unsuccessful', 'cancelled'].indexOf(tender.status) !== -1) && (check_award_and_qualification(tender, bid, ""))) {
                             var date_terminated = date_normalize(tender.date);
                             var state = (get_month(bids_disclojure_date) === get_month(date_terminated)) ? 2 : 3;
