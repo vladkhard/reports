@@ -283,8 +283,10 @@ function(doc) {
 
     function check_award_for_bid_multilot(tender, bid, lot) {
     	var checker = false;
+        var is_awarded = false;
         (tender.awards || []).forEach(function(award) {
             if ((award.bid_id === bid.id) && (award.lotID === lot.id)) {
+                is_awarded = true;
                 if (['active', 'pending'].indexOf(award.status) !== -1) {
                     checker = true;
                 }
@@ -293,7 +295,7 @@ function(doc) {
 	if ((!checker) && !('awards' in tender)) {
 		checker = check_bids_from_bt_atu(tender, lot);
 	}
-        return checker;
+        return ((checker) || (!is_awarded));
     }
 
     function check_qualification_for_bid(tender, bid, lot) {
@@ -356,7 +358,7 @@ function(doc) {
                         return (check_qualification_for_bid(tender, bid, lot) && check_award_for_bid_multilot(tender, bid, lot));
                     }
                     else {
-                        check_qualification_for_bid(tender, bid, lot);
+                        return check_qualification_for_bid(tender, bid, lot);
                     }
                 }
             }
