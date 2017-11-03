@@ -414,11 +414,12 @@ function(doc) {
         });
         var find_date_from_revisions = function(original_tender) {
             var date = 'date';
-            original_tender.awards.forEach(function(award) {
-                if (award.status === 'active') {
-                    date = award.date;
-                }
+            active_awards = original_tender.awards.filter(function(award) {
+                return (award.status === "active");
             });
+            if (active_awards.length > 0) {
+                date = active_awards[0].date;
+            }
             var revs = original_tender.revisions.slice().reverse().slice(0, original_tender.revisions.length - 1);
             var tender = JSON.parse(JSON.stringify(original_tender));
             for (var i = 0; i < revs.length; i++) {
@@ -456,11 +457,12 @@ function(doc) {
 	    });
 	    var find_date_from_revisions = function(original_tender, lot) {
 		    var date = 'date';
-            original_tender.awards.forEach(function(award) {
-                if (award.status === 'active') {
-                    date = award.date;
-                }
+            active_awards = original_tender.awards.filter(function(award) {
+                return ((award.status === "active") && (award.lotID === lot.id));
             });
+            if (active_awards.length > 0) {
+                date = active_awards[0].date;
+            }
             var revs = original_tender.revisions.slice().reverse().slice(0, original_tender.revisions.length - 1);
             var tender = JSON.parse(JSON.stringify(original_tender));
 		    for (var i = 0; i < revs.length; i++) {
