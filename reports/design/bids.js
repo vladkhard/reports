@@ -131,6 +131,7 @@ function(doc) {
             case 'aboveThresholdEU':
 		        return ((tender.qualifications || []).length >= 2);
             case 'competitiveDialogueEU':
+            case 'competitiveDialogueUA':
 		        return ((tender.qualifications || []).length >= 3);
             default:
                 if ('awards' in tender) {
