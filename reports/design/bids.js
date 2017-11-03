@@ -36,7 +36,7 @@ function(doc) {
         var min_date =  Date.parse("2017-01-01T00:00:00+03:00");
         return bids.filter(function(bid) {
             var bid_date =  Date.parse(bid.date);
-            return (((bid.status || "invalid") === "active") &&
+            return ((["active", "invalid.pre-qualification"].indexOf(bid.status) !== -1) &&
 		     (+bid_date > +min_date));
         });
     }
@@ -131,6 +131,7 @@ function(doc) {
             case 'aboveThresholdEU':
 		        return ((tender.qualifications || []).length >= 2);
             case 'competitiveDialogueEU':
+            case 'competitiveDialogueUA':
 		        return ((tender.qualifications || []).length >= 3);
             default:
                 if ('awards' in tender) {

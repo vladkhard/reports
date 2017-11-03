@@ -413,9 +413,15 @@ function(doc) {
 		    return (['unsuccessful', 'pending'].indexOf(awd.status) === -1);
         });
         var find_date_from_revisions = function(original_tender) {
+            var date = 'date';
+            active_awards = original_tender.awards.filter(function(award) {
+                return (award.status === "active");
+            });
+            if (active_awards.length > 0) {
+                date = active_awards[0].date;
+            }
             var revs = original_tender.revisions.slice().reverse().slice(0, original_tender.revisions.length - 1);
             var tender = JSON.parse(JSON.stringify(original_tender));
-            var date = 'date';
             for (var i = 0; i < revs.length; i++) {
                 prev = jsp.apply(tender, revs[i].changes);
                 if (!('awards' in prev)) {
@@ -450,9 +456,15 @@ function(doc) {
 		    return (['unsuccessful', 'pending'].indexOf(awd.status) === -1);
 	    });
 	    var find_date_from_revisions = function(original_tender, lot) {
-		    var revs = original_tender.revisions.slice().reverse().slice(0, original_tender.revisions.length - 1);
-		    var tender = JSON.parse(JSON.stringify(original_tender));
 		    var date = 'date';
+            active_awards = original_tender.awards.filter(function(award) {
+                return ((award.status === "active") && (award.lotID === lot.id));
+            });
+            if (active_awards.length > 0) {
+                date = active_awards[0].date;
+            }
+            var revs = original_tender.revisions.slice().reverse().slice(0, original_tender.revisions.length - 1);
+            var tender = JSON.parse(JSON.stringify(original_tender));
 		    for (var i = 0; i < revs.length; i++) {
 			prev = jsp.apply(tender, revs[i].changes);
 			if (!('awards' in prev)) {
