@@ -1,6 +1,10 @@
 from setuptools import setup
 
-install_requires = [
+NAME = 'reports'
+VERSION = '1.0.0'
+AUTHOR = 'Quintagroup, Ltd.'
+LICENSE = 'Apache License 2.0'
+REQUIRES = [
     'couchdb',
     'dateparser',
     'pbkdf2',
@@ -14,22 +18,23 @@ install_requires = [
     'Jinja2',
     'systemd-python',
     'PyYaml',
-    'ExtendedJournalHandler==1.0.0'
+    'ExtendedJournalHandler==1.0.0',
+    'repoze.lru'
 ]
 
-test_requires = install_requires + [
-    'mock',
+TEST_REQUIRES = REQUIRES + [
+    'mock'
 ]
 
 setup(
-    name='reports',
-    version='0.0.1',
+    name=NAME,
+    version=VERSION,
     packages=[
         'reports',
     ],
-    author='Quintagroup, Ltd.',
+    author=AUTHOR,
     author_email='info@quintagroup.com',
-    license='Apache License 2.0',
+    license=LICENSE,
     url='https://github.com/openprocurement/reports',
     entry_points={
         'console_scripts': [
@@ -44,8 +49,8 @@ setup(
     },
     include_package_data=True,
     zip_safe=False,
-    install_requires=install_requires,
-    tests_require=test_requires,
+    install_requires=REQUIRES,
+    tests_require=TEST_REQUIRES,
     test_suite='reports.tests.main.suite',
-    extras_require={'test': test_requires},
+    extras_require={'test': TEST_REQUIRES},
 )
