@@ -1,9 +1,12 @@
+import os.path
 import argparse
+import arrow
 import iso8601
 import requests
 import json
 import requests_cache
 import re
+from dateutil.parser import parse
 
 
 requests_cache.install_cache('exchange_cache')
@@ -254,3 +257,48 @@ def get_send_args_parser():
     )
 
     return parser
+
+
+def convert_date(
+        date, timezone="Europe/Kiev",
+        to="UTC", format="%Y-%m-%dT%H:%M:%S.%f"
+        ):
+    date = arrow.get(parse(date), timezone)
+    return date.to(to).strftime(format)
+
+
+def prepare_report_interval(period=None):
+    if not period:
+        return ("", "9999-12-30T00:00:00.000000")
+    if len(period) == 1:
+        return convert_date(period[0]), "9999-12-30T00:00:00.000000"
+    if len(period) == 2:
+        return convert_date(period[0], period[1])
+    raise ValueError("Invalid period")
+
+
+def prepare_result_file_name(utility):
+    start, end = "", ""
+    if utility.start_date:
+        start = convert_date(
+                utility.start_date,
+                timezone="UTC",
+                to="Europe/Kiev",
+                format="%Y-%m-%d"
+                )
+    if not utility.end_date.startswith("9999"):
+        end = convert_date(
+                utility.end_date,
+                timezone="UTC",
+                to="Europe/Kiev",
+                format="%Y-%m-%d"
+                )
+    return os.path.join(
+            utility.config.out_path,
+            "{}@{}--{}-{}.csv".format(
+                utility.broker,
+                start,
+                end,
+                utility.operation
+                )
+            )
