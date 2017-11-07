@@ -10,21 +10,21 @@ import yaml
 import requests
 import argparse
 import requests_cache
+from reports.log import getLogger
 from requests.exceptions import RequestException
 from yaml.scanner import ScannerError
 from dateutil.parser import parse
 from config import Config
 from design import bids_owner_date, tenders_owner_date, jsonpatch
 from couchdb.design import ViewDefinition
-from logging import getLogger
 from reports.helpers import get_cmd_parser, create_db_url, Kind, Status
 
 
-views = [bids_owner_date, tenders_owner_date]
+VIEWS = [bids_owner_date, tenders_owner_date]
 
+NEW_ALG_DATE = "2017-08-16"
 
 requests_cache.install_cache('audit_cache')
-NEW_ALG_DATE = "2017-08-16"
 
 
 class BaseUtility(object):
@@ -50,7 +50,7 @@ class BaseUtility(object):
                 self.start_date = self.convert_date(period[0])
                 self.end_date = self.convert_date(period[1])
         self.get_db_connection()
-        self.Logger = getLogger(self.operation)
+        self.Logger = getLogger("BILLING")
         self.payments = self.config.payments(False)
         self.payments_before = self.config.payments(True)
 
@@ -95,14 +95,14 @@ class BaseUtility(object):
 
     def _sync_views(self):
 
-        ViewDefinition.sync_many(self.adb, views)
+        ViewDefinition.sync_many(self.adb, VIEWS)
         _id = '_design/report'
         original = self.adb.get(_id)
         original['views']['lib'] = {
             'jsonpatch': jsonpatch
         }
         self.adb.save(original)
-        ViewDefinition.sync_many(self.adb, views)
+        ViewDefinition.sync_many(self.adb, VIEWS)
 
     def get_response(self):
         self._sync_views()
@@ -158,6 +158,7 @@ class BaseUtility(object):
                 writer.writerow(row)
 
     def run(self):
+        self.Logger.info("Start generating")
         self.get_response()
         self.out_name()
         self.write_csv()
