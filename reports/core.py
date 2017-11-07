@@ -14,7 +14,7 @@ from requests.exceptions import RequestException
 from yaml.scanner import ScannerError
 from dateutil.parser import parse
 from config import Config
-from design import bids_owner_date, tenders_owner_date
+from design import bids_owner_date, tenders_owner_date, jsonpatch
 from couchdb.design import ViewDefinition
 from logging import getLogger
 from reports.helpers import get_cmd_parser, create_db_url, Kind, Status
@@ -22,7 +22,9 @@ from reports.helpers import get_cmd_parser, create_db_url, Kind, Status
 
 views = [bids_owner_date, tenders_owner_date]
 
+
 requests_cache.install_cache('audit_cache')
+NEW_ALG_DATE = "2017-08-16"
 
 
 class BaseUtility(object):
@@ -49,8 +51,8 @@ class BaseUtility(object):
                 self.end_date = self.convert_date(period[1])
         self.get_db_connection()
         self.Logger = getLogger(self.operation)
-        self.payments = self.config.payments(True)
-        self.payments_before = self.config.payments(False)
+        self.payments = self.config.payments(False)
+        self.payments_before = self.config.payments(True)
 
     def get_db_connection(self):
         host = self.config.get_option('db', 'host')
@@ -92,6 +94,14 @@ class BaseUtility(object):
         return p[-1]
 
     def _sync_views(self):
+
+        ViewDefinition.sync_many(self.adb, views)
+        _id = '_design/report'
+        original = self.adb.get(_id)
+        original['views']['lib'] = {
+            'jsonpatch': jsonpatch
+        }
+        self.adb.save(original)
         ViewDefinition.sync_many(self.adb, views)
 
     def get_response(self):
