@@ -11,7 +11,10 @@ install_requires = [
     'pyminizip',
     'arrow',
     'boto3',
-    'Jinja2'
+    'Jinja2',
+    'systemd-python',
+    'PyYaml',
+    'ExtendedJournalHandler==1.0.0'
 ]
 
 test_requires = install_requires + [
