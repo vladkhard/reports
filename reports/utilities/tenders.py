@@ -2,25 +2,30 @@ import os
 import csv
 from reports.core import BaseTendersUtility, NEW_ALG_DATE
 from reports.helpers import (
-    value_currency_normalize
+    value_currency_normalize,
+    get_arguments_parser,
+    prepare_result_file_name
 )
 
 
 class TendersUtility(BaseTendersUtility):
 
-    def __init__(self):
-        super(TendersUtility, self).__init__('tenders')
+    def __init__(
+            self, broker, period, config,
+            timezone="Europe/Kiev",
+            ):
+        super(TendersUtility, self).__init__(
+            broker, period, config, operation="tenders", timezone=timezone)
+
         self.headers = ["tender", "tenderID", "lot",
                         "status", "lot_status", "currency",
                         "kind", "value", "rate", "bill"]
-        [self.headers.remove(col) for col in self.skip_cols if col in self.headers]
+        # TODO:
+        # [self.headers.remove(col) for col in self.skip_cols if col in self.headers]
 
     def row(self, record):
         rate = None
         tender = record.get('tender', '')
-        lot = record.get('lot', '')
-        status = record.get('status', '')
-        lot_status = record.get('lot_status', '')
         date = record.get('startdate', '')
         if date < self.threshold_date:
             version = 1
@@ -28,23 +33,8 @@ class TendersUtility(BaseTendersUtility):
             version = 3
         else:
             version = 2
-        if lot:
-            if ','.join([tender, lot]) in self.ignore:
-                self.Logger.info(
-                    'Skip tender {} with lot {} by'
-                    ' ignore list'.format(tender, lot))
-                return '', ''
-        else:
-            if '{},'.format(tender) in self.ignore:
-                self.Logger.info(
-                    'Skip tender {} by ignore list'.format(tender)
-                )
-                return '', ''
         if record.get('kind') not in self.kinds and version != 3:
             self.Logger.info('Skip tender {} by kind'.format(tender))
-            return '', ''
-        if self.check_status(status, lot_status) and version != 3:
-            self.Logger.info('Skip tender {} by status {}'.format(tender, status))
             return '', ''
         row = list(record.get(col, '') for col in self.headers[:-2])
         value = float(record.get(u'value', 0))
@@ -61,7 +51,8 @@ class TendersUtility(BaseTendersUtility):
             self.Logger.info(msg)
         r = str(rate) if rate else ''
         row.append(r)
-        row.append(self.get_payment(value, record.get('startdate', '') < self.threshold_date))
+        grid = 2017 if record.get('startdate', '') < self.threshold_date else 2016
+        row.append(self.get_payment(value, grid))
         self.Logger.info(
             "Refund {} for tender {} with value {}".format(
                 row[-1], row[0], value
@@ -76,11 +67,12 @@ class TendersUtility(BaseTendersUtility):
         splitter_before = [u'before_2017']
         splitter_after = [u'after_2017-01-01']
         splitter_new = [u'after {}'.format(NEW_ALG_DATE)]
+        destination = prepare_result_file_name(self)
         if not self.headers:
             raise ValueError
-        if not os.path.exists(os.path.dirname(os.path.abspath(self.put_path))):
-            os.makedirs(os.path.dirname(os.path.abspath(self.put_path)))
-        with open(self.put_path, 'w') as out_file:
+        if not os.path.exists(os.path.dirname(destination)):
+            os.makedirs(os.path.dirname(destination))
+        with open(destination, 'w') as out_file:
             writer = csv.writer(out_file)
             writer.writerow(self.headers)
             for row, ver in self.rows():
@@ -110,8 +102,14 @@ class TendersUtility(BaseTendersUtility):
 
 
 def run():
-    utility = TendersUtility()
+    parser = get_arguments_parser()
+    args = parser.parse_args()
+
+    utility = TendersUtility(
+        args.broker, args.period,
+        args.config, timezone=args.timezone)
     utility.run()
+
 
 if __name__ == "__main__":
     run()

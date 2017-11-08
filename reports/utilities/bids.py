@@ -1,25 +1,25 @@
 import os
 import csv
 from reports.core import BaseBidsUtility, NEW_ALG_DATE
-from reports.helpers import (
-    get_cmd_parser,
-    value_currency_normalize
-)
+from reports.helpers import value_currency_normalize,\
+    get_arguments_parser, prepare_result_file_name
+
+
+HEADERS = [
+    u"tender", u"tenderID", u"lot",
+    u"value", u"currency", u"bid",
+    u'rate', u"bill", u"state"
+]
 
 
 class BidsUtility(BaseBidsUtility):
 
-    def __init__(self):
-        super(BidsUtility, self).__init__('bids')
-        self.headers = [u"tender", u"tenderID", u"lot",
-                        u"value", u"currency", u"bid", u'rate', u"bill", u"state"]
+    headers = HEADERS
 
     def row(self, record):
         startdate = record.get('startdate', '')
         version = 1 if startdate < NEW_ALG_DATE else 2
-        date_terminated = record.get('date_terminated', '')
         state = record.get('state', '')
-        bid = record.get(u'bid', '')
         rate = None
         row = list(record.get(col, '') for col in self.headers[:-3])
         value = float(record.get(u'value', 0))
@@ -49,11 +49,12 @@ class BidsUtility(BaseBidsUtility):
     def write_csv(self):
         second_version = []
         splitter = [u'after {}'.format(NEW_ALG_DATE)]
+        destination = prepare_result_file_name(self)
         if not self.headers:
             raise ValueError
-        if not os.path.exists(os.path.dirname(os.path.abspath(self.put_path))):
-            os.makedirs(os.path.dirname(os.path.abspath(self.put_path)))
-        with open(self.put_path, 'w') as out_file:
+        if not os.path.exists(os.path.dirname(destination)):
+            os.makedirs(os.path.dirname(destination))
+        with open(destination, 'w') as out_file:
             writer = csv.writer(out_file)
             writer.writerow(self.headers)
             writer.writerow(['after_2017-01-01'])
@@ -75,7 +76,10 @@ class BidsUtility(BaseBidsUtility):
 
 
 def run():
-    utility = BidsUtility()
+    parser = get_arguments_parser()
+    args = parser.parse_args()
+    utility = BidsUtility(args.broker, args.period,
+                          args.config, timezone=args.timezone)
     utility.run()
 
 
