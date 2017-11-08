@@ -1,12 +1,15 @@
-from reports.core import BaseTendersUtility, NEW_ALG_DATE
+from reports.core import BaseUtility, NEW_ALG_DATE
 from reports.helpers import (
     thresholds_headers,
     value_currency_normalize,
-    get_arguments_parser
+    get_arguments_parser,
+    Kind
 )
 
 
-class RefundsUtility(BaseTendersUtility):
+class RefundsUtility(BaseUtility):
+
+    view = 'report/tenders_owner_date'
 
     def __init__(
             self, broker, period, config,
@@ -84,11 +87,20 @@ class RefundsUtility(BaseTendersUtility):
 
 def run():
     parser = get_arguments_parser()
-    args = parser.parse_args()
+    parser.add_argument(
+             '--kind',
+             metavar='Kind',
+             action=Kind,
+             help='Kind filtering functionality. '
+             'Usage: --kind <include, exclude, one>=<kinds>'
+             )
 
+    args = parser.parse_args()
     utility = RefundsUtility(
         args.broker, args.period,
         args.config, timezone=args.timezone)
+
+    utility.kinds = args.kind
     utility.run()
 
 

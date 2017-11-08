@@ -141,26 +141,3 @@ class BaseBidsUtility(BaseUtility):
             self.Logger.info('Skipped fetched early bid: %s', bid_id)
             return False
         return True
-
-
-class BaseTendersUtility(BaseUtility):
-
-    def __init__(
-            self, broker, period, config,
-            timezone="Europe/Kiev",
-            operation='tenders'
-            ):
-        self.view = 'report/tenders_owner_date'
-        super(BaseTendersUtility, self).__init__(
-            broker, period, config, operation=operation, timezone=timezone)
-
-        # TODO: kinds
-
-        # parser.add_argument(
-        #     '--kind',
-        #     metavar='Kind',
-        #     action=Kind,
-        #     help='Kind filtering functionality. '
-        #          'Usage: --kind <include, exclude, one>=<kinds>'
-        # )
-        # self.kinds = args.kind

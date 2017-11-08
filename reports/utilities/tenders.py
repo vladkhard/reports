@@ -1,14 +1,15 @@
 import os
 import csv
-from reports.core import BaseTendersUtility, NEW_ALG_DATE
+from reports.core import BaseUtility, NEW_ALG_DATE
 from reports.helpers import (
     value_currency_normalize,
     get_arguments_parser,
-    prepare_result_file_name
+    prepare_result_file_name,
+    Kind
 )
 
 
-class TendersUtility(BaseTendersUtility):
+class TendersUtility(BaseUtility):
 
     def __init__(
             self, broker, period, config,
@@ -103,11 +104,20 @@ class TendersUtility(BaseTendersUtility):
 
 def run():
     parser = get_arguments_parser()
+    parser.add_argument(
+             '--kind',
+             metavar='Kind',
+             action=Kind,
+             help='Kind filtering functionality. '
+             'Usage: --kind <include, exclude, one>=<kinds>'
+             )
+
     args = parser.parse_args()
 
     utility = TendersUtility(
         args.broker, args.period,
         args.config, timezone=args.timezone)
+    utility.kinds = args.kind
     utility.run()
 
 
