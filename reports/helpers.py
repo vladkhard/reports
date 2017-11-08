@@ -12,7 +12,7 @@ from dateutil.parser import parse
 requests_cache.install_cache('exchange_cache')
 
 
-def get_cmd_parser():
+def get_arguments_parser():
     parser = argparse.ArgumentParser(
         description="Openprocurement Billing"
     )
@@ -271,9 +271,9 @@ def prepare_report_interval(period=None):
     if not period:
         return ("", "9999-12-30T00:00:00.000000")
     if len(period) == 1:
-        return convert_date(period[0]), "9999-12-30T00:00:00.000000"
+        return (convert_date(period[0]), "9999-12-30T00:00:00.000000")
     if len(period) == 2:
-        return convert_date(period[0], period[1])
+        return (convert_date(period[0]), convert_date(period[1]))
     raise ValueError("Invalid period")
 
 
