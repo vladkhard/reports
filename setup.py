@@ -42,7 +42,7 @@ setup(
             'tenders = reports.utilities.tenders:run',
             'refunds = reports.utilities.refunds:run',
             'invoices = reports.utilities.invoices:run',
-            'init = reports.db_init:run',
+            'init = reports.utilities.init:run',
             'zip = reports.utilities.zip:run',
             'send = reports.utilities.send:run',
         ]
