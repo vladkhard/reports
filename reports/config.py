@@ -3,7 +3,7 @@ from repoze.lru import lru_cache
 from logging.config import fileConfig
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
-from report.helpers import create_db_url
+from reports.helpers import create_db_url
 
 
 BIDS_PAYMENTS_KEYS = frozenset(('bids', 'invoices'))
@@ -27,18 +27,18 @@ class Config(object):
             self.get_option('payments', 'thresholds').split(',')
         ]
         self.out_path = self.get_option('out', 'out_dir')
-        db_name = self.config.get_option('db', 'name')
+        db_name = self.get_option('db', 'name')
         self.db_url = create_db_url(
-            self.config.get_option('db', 'host'),
-            self.config.get_option('db', 'port'),
-            self.config.get_option('user', 'username'),
-            self.config.get_option('user', 'password'),
-            db_name),
+            self.get_option('db', 'host'),
+            self.get_option('db', 'port'),
+            self.get_option('user', 'username'),
+            self.get_option('user', 'password'),
+            db_name)
         self.adb_url = create_db_url(
-            self.config.get_option('db', 'host'),
-            self.config.get_option('db', 'port'),
-            self.config.get_option('admin', 'username'),
-            self.config.get_option('admin', 'password'),
+            self.get_option('db', 'host'),
+            self.get_option('db', 'port'),
+            self.get_option('admin', 'username'),
+            self.get_option('admin', 'password'),
             db_name)
 
     def get_option(self, section, name):

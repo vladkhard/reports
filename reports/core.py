@@ -58,14 +58,13 @@ class BaseUtility(object):
         raise NotImplemented
 
     def get_payment(self, value, year=2017):
-        p = self.payments(grid=year)
+        p = self.config.payments(grid=year)
         for index, threshold in enumerate(self.config.thresholds):
             if value <= threshold:
                 return p[index]
         return p[-1]
 
     def _sync_views(self):
-
         ViewDefinition.sync_many(self.adb, VIEWS)
         _id = '_design/report'
         original = self.adb.get(_id)
@@ -74,25 +73,25 @@ class BaseUtility(object):
         }
         self.adb.save(original)
 
-    def get_response(self):
+    @property
+    def response(self):
         self._sync_views()
-
         if not self.view:
             raise NotImplemented
         return self.db.iterview(
             self.view,
             1000,
             startkey=(self.broker, self.start_date),
-            endkey=(self.broker, self.end_date)
-        )
+            endkey=(self.broker, self.end_date))
 
     def write_csv(self):
         if not self.headers:
             raise ValueError
         destination = prepare_result_file_name(self)
-        if not os.path.exists(os.path.dirname(os.path.abspath(destination))):
-            os.makedirs(os.path.dirname(os.path.abspath(destination)))
-        with open(self.put_path, 'w') as out_file:
+        if not os.path.exists(os.path.dirname(destination)):
+            os.makedirs(os.path.dirname(destination))
+
+        with open(destination, 'w') as out_file:
             writer = csv.writer(out_file)
             writer.writerow(self.headers)
             for row in self.rows():
@@ -100,26 +99,18 @@ class BaseUtility(object):
 
     def run(self):
         self.Logger.info("Start generating")
-        self.get_response()
-        self.out_name()
         self.write_csv()
 
 
 class BaseBidsUtility(BaseUtility):
 
-    VIEW = 'report/bids_owner_date'
-
     def __init__(
             self, broker, period, config,
             timezone="Europe/Kiev", operation="bids"
             ):
-        super(BaseBidsUtility, self).__init__(operation)
-        self.broker = broker
-        self.period = period
-        self.config = config
-        self.timezone = timezone
-        self.operation = operation
-        self._initialize(self.broker, self.period, self.config, self.timezone)
+        self.view = 'report/bids_owner_date'
+        super(BaseBidsUtility, self).__init__(
+            broker, period, config, operation=operation, timezone=timezone)
 
     def get_initial_bids(self, audit, tender_id):
         url = audit is not None and audit.get('url')
@@ -154,20 +145,16 @@ class BaseBidsUtility(BaseUtility):
 
 class BaseTendersUtility(BaseUtility):
 
-    VIEW = 'report/tenders_owner_date'
-
     def __init__(
             self, broker, period, config,
             timezone="Europe/Kiev",
             operation='tenders'
             ):
-        super(BaseTendersUtility, self).__init__(operation)
+        self.view = 'report/tenders_owner_date'
+        super(BaseTendersUtility, self).__init__(
+            broker, period, config, operation=operation, timezone=timezone)
+
         # TODO: kinds
-        self.broker = broker
-        self.period = period
-        self.config = config
-        self.timezone = timezone
-        self.operation = operation
 
         # parser.add_argument(
         #     '--kind',
@@ -176,10 +163,4 @@ class BaseTendersUtility(BaseUtility):
         #     help='Kind filtering functionality. '
         #          'Usage: --kind <include, exclude, one>=<kinds>'
         # )
-        self._initialize(
-            self.broker,
-            self.period,
-            self.config,
-            self.timezone
-        )
         # self.kinds = args.kind
