@@ -55,12 +55,12 @@ class Config(object):
     @lru_cache(300)
     def _grid(self, year):
         if self._for in BIDS_PAYMENTS_KEYS:
-            return self.get_option(year, 'cdb')
+            return self.get_option(str(year), 'cdb')
         elif self._for in TENDERS_PAYMENTS_KEYS:
-            return self.get_option(year, 'emall')
+            return self.get_option(str(year), 'emall')
         raise NotImplemented("No payments grid for {}".format(year))
 
     def payments(self, grid=2017):
         return [
-            float(i.strip()) for i in self._grid(grid)
+            float(i.strip()) for i in self._grid(grid).split(',')
         ]
