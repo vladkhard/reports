@@ -269,30 +269,32 @@ function(doc) {
     }
 
     function check_award_for_bid(tender, bid) {
-	var checker = false;
-    var is_awarded = false;
-        (tender.awards || []).forEach(function(award) {
-            if (award.bid_id === bid.id) {
-                is_awarded = true;
-                if (['active', 'pending'].indexOf(award.status) !== -1) {
-                    checker = true;
-                }
-            }
+        var checker = false;
+        var is_awarded = false;
+        var awards = (tender.awards || []).filter(function(award) {
+            return (award.bid_id === bid.id);
         });
+        if (awards.length > 0) {
+            is_awarded = true;
+            if (awards[awards.length - 1].status !== 'unsuccessful') {
+                checker = true;
+            }
+        }
         return ((checker) || (!is_awarded));
     }
 
     function check_award_for_bid_multilot(tender, bid, lot) {
-    	var checker = false;
+        var checker = false;
         var is_awarded = false;
-        (tender.awards || []).forEach(function(award) {
-            if ((award.bid_id === bid.id) && (award.lotID === lot.id)) {
-                is_awarded = true;
-                if (['active', 'pending'].indexOf(award.status) !== -1) {
-                    checker = true;
-                }
-            }
+        var awards = (tender.awards || []).filter(function(award) {
+            return ((award.bid_id === bid.id) && (award.lotID === lot.id));
         });
+        if (awards.length > 0) {
+            is_awarded = true;
+            if (awards[awards.length - 1].status !== 'unsuccessful') {
+                checker = true;
+            }
+        }
 	if ((!checker) && !('awards' in tender)) {
 		checker = check_bids_from_bt_atu(tender, lot);
 	}
