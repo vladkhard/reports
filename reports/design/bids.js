@@ -369,7 +369,7 @@ function(doc) {
             } else {
                 var revs = tender.revisions.slice().reverse().slice(0, tender.revisions.length - 1)
                 var tender_copy = JSON.parse(JSON.stringify(tender));
-                tender_copy = jsp.apply(tender_copy, revs[0].changes);
+                prev = jsp.apply(tender_copy, revs[0].changes);
                 if (prev.status == 'active.pre-qualification') {
                     prev.qualifications.forEach(function(qual) {
                         if (qual.status !== 'cancelled') {
