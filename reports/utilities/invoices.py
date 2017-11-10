@@ -25,22 +25,12 @@ class InvoicesUtility(BaseBidsUtility):
         startdate = record.get('startdate', '')
         version = 1 if startdate < NEW_ALG_DATE else 2 #TODO: unused
         date_terminated = record.get('date_terminated', '') #TODO: unused
-        value = float(record.get("value", 0))
+        value, rate = self.convert_value(record)
         bid = record.get(u"bid", '') # TODO: unused
         state = record.get('state', '')
-        if record[u'currency'] != u'UAH':
-            old = value
-            value, rate = value_currency_normalize(
-                value, record[u'currency'], record[u'startdate']
-            )
-            msg = "Changed value {} {} by exgange rate {} on {}"\
-                " is  {} UAH in {}".format(
-                    old, record[u'currency'], rate,
-                    record[u'startdate'], value, record['tender']
-                )
-            self.Logger.info(msg)
+
         payment = self.get_payment(value)
-        p = self.payments
+        p = self.config.payments(2017)
         c = self.counters[state] if state else self.counters[0]
         for i, x in enumerate(p):
             if payment == x:

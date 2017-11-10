@@ -20,20 +20,8 @@ class BidsUtility(BaseBidsUtility):
         startdate = record.get('startdate', '')
         version = 1 if startdate < NEW_ALG_DATE else 2
         state = record.get('state', '')
-        rate = None
         row = list(record.get(col, '') for col in self.headers[:-3])
-        value = float(record.get(u'value', 0))
-        if record[u'currency'] != u'UAH':
-            old = value
-            value, rate = value_currency_normalize(
-                value, record[u'currency'], record[u'startdate']
-            )
-            msg = "Changed value {} {} by exgange rate {} on {}"\
-                " is  {} UAH in {}".format(
-                    old, record[u'currency'], rate,
-                    record[u'startdate'], value, record['tender']
-                )
-            self.Logger.info(msg)
+        value, rate = self.convert_value(record)
         r = str(rate) if rate else ''
         row.append(r)
         row.append(self.get_payment(value))

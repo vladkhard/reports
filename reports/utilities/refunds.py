@@ -34,18 +34,7 @@ class RefundsUtility(BaseUtility):
             self.Logger.info('Scip tender {} by kind'.format(tender))
             return
 
-        value = float(record.get("value", 0))
-        if record[u'currency'] != u'UAH':
-            old = value
-            value, rate = value_currency_normalize(
-                value, record[u'currency'], record[u'startdate']
-            )
-            msg = "Changed value {} {} by exgange rate {} on {}"\
-                " is  {} UAH in {}".format(
-                    old, record[u'currency'], rate,
-                    record[u'startdate'], value, record['tender']
-                )
-            self.Logger.info(msg)
+        value, rate = self.convert_value(record)
 
         before = 2016 if initial_date < self.threshold_date  else 2017
         payment = self.get_payment(value, before)

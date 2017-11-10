@@ -12,7 +12,7 @@ from couchdb.design import ViewDefinition
 from reports.log import getLogger
 from reports.config import Config
 from reports.design import bids_owner_date, tenders_owner_date, jsonpatch
-from reports.helpers import prepare_report_interval, prepare_result_file_name
+from reports.helpers import prepare_report_interval, prepare_result_file_name, value_currency_normalize
 
 
 VIEWS = [bids_owner_date, tenders_owner_date]
@@ -72,6 +72,22 @@ class BaseUtility(object):
             'jsonpatch': jsonpatch
         }
         self.adb.save(original)
+
+    def convert_value(self, row):
+        value, curr = row.get(u'value', 0), row.get(u'currency', u'UAH')
+        if curr != u'UAH':
+            old = float(value)
+            value, rate = value_currency_normalize(
+                old, row[u'currency'], row[u'startdate']
+            )
+            msg = "Changed value {} {} by exgange rate {} on {}"\
+                " is  {} UAH in {}".format(
+                    old, row[u'currency'], rate,
+                    row[u'startdate'], value, row['tender']
+                )
+            self.Logger.info(msg)
+            return value, rate
+        return value, "-"
 
     @property
     def response(self):
