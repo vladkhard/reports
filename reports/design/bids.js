@@ -502,7 +502,7 @@ function(doc) {
                 if(is_multilot) {
                     (bids || []).forEach(function(bid) {
                         var init_date = find_initial_bid_date(tender.revisions || [], tender.bids.indexOf(bid), bid.id);
-                        bid.lotValues .forEach(function(value) {
+                        (bid.lotValues || []).forEach(function(value) {
                             tender.lots.forEach(function(lot) {
                                 if (check_lot(tender, lot)) {
                                     if (value.relatedLot === lot.id) {
