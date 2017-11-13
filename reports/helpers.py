@@ -6,10 +6,17 @@ import requests
 import json
 import requests_cache
 import re
+import datetime
+import subprocess as sb
 from dateutil.parser import parse
+from contextlib import contextmanager
+
+from reports.log import getLogger
 
 
 requests_cache.install_cache('exchange_cache')
+RE = re.compile(r'(^.*)@(\d{4}-\d{2}-\d{2}--\d{4}-\d{2}-\d{2})?-([a-z\-]*)\.zip')
+LOGGER = getLogger("BILLING")
 
 
 def get_arguments_parser():
@@ -210,55 +217,6 @@ class Status(argparse.Action):
         self.statuses['statuses'] = set(sts)
 
 
-def get_operations(name):
-    words = re.findall(r'\w+', name)
-    return [w for w in words
-            if w in ['bids', 'invoices', 'refunds', 'tenders']]
-
-
-def get_send_args_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-c',
-        '--config',
-        dest='config',
-        required=True,
-        help='Path to configuration file'
-    )
-    parser.add_argument(
-        '-f',
-        '--file',
-        nargs='+',
-        dest='files',
-        help='Files to send'
-    )
-    parser.add_argument(
-        '-n',
-        '--notify',
-        action='store_true',
-        help='Notification flag'
-    )
-    parser.add_argument(
-        '-e',
-        '--exists',
-        action='store_true',
-        help='Send mails from existing directory; timestamp required'
-    )
-    parser.add_argument(
-        '-t',
-        '--timestamp',
-        help='Initial run timestamp'
-    )
-    parser.add_argument(
-        '-b',
-        '--brokers',
-        nargs='+',
-        help='Recipients'
-    )
-
-    return parser
-
-
 def convert_date(
         date, timezone="Europe/Kiev",
         to="UTC", format="%Y-%m-%dT%H:%M:%S.%f"
@@ -302,3 +260,55 @@ def prepare_result_file_name(utility):
                 utility.operation
                 )
             )
+
+
+def parse_period_string(period):
+    if period:
+        dates = period.split('--')
+        if len(dates) > 2:
+            raise ValueError("Invalid date string")
+        start, end = [parse(date) for date in period.split('--')]
+    else:
+        end = datetime.date.today().replace(day=1)
+        start = (end - datetime.timedelta(days=1)).replace(day=1)
+    return start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")
+
+
+def get_out_name(files):
+    broker = os.path.basename(files[0].split('@')[0])
+    date = os.path.basename(files[0].split('@')[1]).split('-')[:-1]
+    operations = set(
+        [os.path.basename(f).split('-')[-1].split('.')[0] for f in files]
+    )
+
+    out_name = '{}@{}-{}.zip'.format(
+        broker, '-'.join(date), '-'.join(operations)
+    )
+    return out_name
+
+
+@contextmanager
+def use_credentials(key):
+    try:
+        yield dict(
+            item.split('=') for item in
+            sb.check_output('pass {}'.format(key), shell=True).split('\n')
+            if item
+        )
+    except Exception as e:
+        LOGGER.fatal("unable to get credentials from"
+                     " pass to {}. error: {}".format(key, e))
+        yield {}
+
+
+def create_email_context_from_filename(file_name):
+    broker, period, ops = re.finall(RE, file_name)
+    if ops:
+        ops = ops.split('-')
+    type = ' and '.join(ops) if len(ops) == 2 else ', '.join(ops)
+    return {
+        'type': type,
+        'broker': broker,
+        'encrypted': bool('bids' in ops),
+        'period': period
+    }
