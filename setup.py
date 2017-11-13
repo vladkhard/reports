@@ -45,6 +45,9 @@ setup(
             'init = reports.utilities.init:run',
             'zip = reports.utilities.zip:run',
             'send = reports.utilities.send:run',
+        ],
+        'billing.storages': [
+            's3 = reports.storages:S3Storage'
         ]
     },
     include_package_data=True,
