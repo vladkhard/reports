@@ -21,7 +21,7 @@ REQUIRES = [
     'ExtendedJournalHandler==1.0.0',
     'repoze.lru'
 ]
-
+EXTRA = REQUIRES + ['python-swiftclient']
 TEST_REQUIRES = REQUIRES + [
     'mock'
 ]
@@ -45,9 +45,11 @@ setup(
             'init = reports.utilities.init:run',
             'zip = reports.utilities.zip:run',
             'send = reports.utilities.send:run',
+            'generate = reports.generate:run'
         ],
         'billing.storages': [
-            's3 = reports.storages:S3Storage'
+            's3 = reports.storages:S3Storage',
+            'swift = reports.storages:SwiftStorage[swift]'
         ]
     },
     include_package_data=True,
@@ -55,5 +57,8 @@ setup(
     install_requires=REQUIRES,
     tests_require=TEST_REQUIRES,
     test_suite='reports.tests.main.suite',
-    extras_require={'test': TEST_REQUIRES},
+    extras_require={
+        'test': TEST_REQUIRES,
+        'swift': EXTRA
+    },
 )

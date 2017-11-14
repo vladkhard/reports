@@ -147,6 +147,7 @@ class Porter(object):
         storage = REGISTRY.get(self.config.get('storage', 'type').strip())
         if not storage:
             LOGGER.fatal("Unsuppoted storage: {}".format(storage))
+            sys.exit(1)
         self.storage = storage(self.config_file_path)
         self.postman = Postman(self.config_file_path)
         if not timestamp:

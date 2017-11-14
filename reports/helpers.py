@@ -289,15 +289,19 @@ def get_out_name(files):
 
 @contextmanager
 def use_credentials(key):
-    try:
-        yield dict(
-            item.split('=') for item in
-            sb.check_output('pass {}'.format(key), shell=True).split('\n')
-            if item
-        )
-    except Exception as e:
-        LOGGER.fatal("unable to get credentials from"
-                     " pass to {}. error: {}".format(key, e))
+    if key:
+        try:
+            yield dict(
+                item.split('=') for item in
+                sb.check_output('pass {}'.format(key), shell=True).split('\n')
+                if item
+            )
+        except Exception as e:
+            LOGGER.fatal("unable to get credentials from"
+                         " pass to {}. error: {}".format(key, e))
+            yield {}
+    else:
+        LOGGER.warning("Empty key path for for password store")
         yield {}
 
 
