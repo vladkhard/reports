@@ -36,6 +36,7 @@ parser.add_argument('--notify-brokers', action="append")
 parser.add_argument('--timezone', default='Europe/Kiev')
 ARGS = parser.parse_args()
 
+INCLUDE = [op.strip() for op in ARGS.include.split(",")]
 TIMESTAMP = ARGS.timestamp or datetime.now().strftime("%Y-%m-%d/%H-%M-%S-%f")
 CONFIG.read(ARGS.config)
 fileConfig(ARGS.config)
@@ -121,7 +122,7 @@ def get_password_for_broker(broker):
 def zip_for_broker(
         broker,
         period,
-        include=['bids', 'invoices', 'tenders', 'refunds'],
+        include=INCLUDE,
         ):
     start, end = period
     files = [
@@ -155,6 +156,7 @@ def zip_all_tenders(brokers, period):
                 "{}@{}--{}-{}.csv".format(broker, start, end, type)
                 for type in ['tenders', 'refunds']
                 for broker in brokers
+                if brokers != 'all'
             ],
             CONFIG.get('out', 'out_dir'),
             "all@{}--{}-tenders.zip".format(start, end),
@@ -171,6 +173,7 @@ def zip_all_bids(brokers, period):
     files.extend([
         "{}@{}--{}-invoices.csv".format(broker, start, end)
         for broker in brokers
+        if broker != 'all'
     ])
     try:
         name = "all@{}--{}-bids.zip".format(start, end)
@@ -209,29 +212,30 @@ def run():
                 )
             sys.exit(0)
     if ARGS.brokers:
-        brokers = [b.strip() for b in ARGS.brokers.split(',')]
+        brokers = [
+            b.strip() for b in ARGS.brokers.split(',')
+            if b.strip() != 'all'
+        ]
     else:
-        brokers = [item[0] for item in CONFIG.items('brokers_emails')]
-    LOGGER.warning(
-        "Started work generation for {brokers} of {start} {end}. "
-        "Archive content: {content} "
-        "Timestamp: {timestamp}".format(**{
-            "brokers": brokers,
-            "start": period[0],
-            "end": period[1],
-            'content': ARGS.include,
-            'timestamp': TIMESTAMP
-            })
+        brokers = [
+            item[0].strip() for item in CONFIG.items('brokers_emails')
+            if item[0].strip() != 'all'
+        ]
+    LOGGER.warning("Started generation for {} between {} and {}".format(
+        brokers, period[0], period[1])
         )
+    LOGGER.warning("Archive content: {}".format(INCLUDE))
+    LOGGER.warning("Timestamp: {}".format(TIMESTAMP))
 
     for broker in brokers:
         generate_for_broker(broker, period, ARGS.config)
         zip_file_path = zip_for_broker(broker, period)
         sent = upload_and_notify([zip_file_path])
     create_all_bids_csv(brokers, period)
+
     results = upload_and_notify([
         zip_all_tenders(brokers, period),
         zip_all_bids(brokers, period)
         ])
     if results:
-        clean_up
+        clean_up()
