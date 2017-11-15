@@ -77,29 +77,26 @@ def create_all_bids_csv(brokers, period):
     files = [
         construct_filenames_of_generation('bids', broker, period)
         for broker in brokers
+        if broker != 'all'
     ]
     all_file = "all@{0}--{1}-bids.csv".format(*period)
     with open(os.path.join(path, all_file), 'w') as out_stream:
         results_file = csv.writer(out_stream)
+        results_file.writerow(HEADERS)
         for header, iterator in zip(
-                (HEADERS, ['after_2017-01-01']),
+                (['after_2017-01-01'], ['after 2017-08-16']),
                 (itertools.takewhile, itertools.dropwhile)
                 ):
             results_file.writerow(header)
             for file in files:
                 with open(os.path.join(path, file)) as broker_file:
-                    rows = iterator(
-                            lambda line: not line[0].startswith('after'),
-                            csv.reader(broker_file)
-                            )
-                    try:
-                        skip = next(rows)
-                        LOGGER.warning("Skipped {}".format(skip))
-                    except StopIteration:
-                        continue
-
-                    for line in rows:
-                        if line:
+                    reader = csv.reader(broker_file)
+                    next(reader)
+                    for line in iterator(
+                            lambda line: line != ['after 2017-08-16'],
+                            reader
+                            ):
+                        if line and line != header:
                             results_file.writerow(line)
 
 
