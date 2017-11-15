@@ -1,5 +1,4 @@
 import os.path
-import hashlib
 from ConfigParser import ConfigParser
 
 import boto3
@@ -153,22 +152,32 @@ if SWIFT:
             with open(file, 'r') as upload_stream:
                 try:
                     with self.swift as swift:
+                        key = '/'.join((timestamp, os.path.basename(file)))
                         upload_obj = swiftclient.service.SwiftUploadObject(
                             upload_stream,
-                            object_name='/'.join(
-                                (timestamp, os.path.basename(file))
-                                )
-                        )
-                        swift.upload(
-                            container=self.config.bucket,
-                            objects=[upload_obj]
+                            object_name=key
                             )
+                        result = swift.upload(
+                                    container=self.config.bucket,
+                                    objects=[upload_obj]
+                                    )
+                        if result['success']:
+                            # TODO: key should contain full url
+                            return self.generate_presigned_url(key)
+                        LOGGER.fatal(
+                            "Falied to upload object {} with error {}".format(
+                                key,
+                                result['error']
+                            ))
+                        return ""
+
                 except swiftclient.service.SwiftError as error:
                     LOGGER.fatal(
                         "Falied to upload file to swift with error {}".format(
                             error
                             )
                         )
+                    return ""
 
         def list_objects(self, prefix):
             with self.swift as swift:
