@@ -111,6 +111,11 @@ class S3Storage(BaseStorate):
 
 
 if SWIFT:
+    class SwiftConfig(Config):
+        def __init__(self, config_file_path):
+            super(self, SwiftConfig).__init__(config_file_path)
+            self.swift_url_prefix = self.config.get(self.type, 'url_prefix')
+
     class SwiftStorage(BaseStorate):
 
         def __init__(self, config):
@@ -119,7 +124,7 @@ if SWIFT:
 
             :param config: System path to configuration file.
             """
-            self.config = Config(config)
+            self.config = SwiftConfig(config)
             with use_credentials(self.config.password_prefix) as user_pass:
                 self.swift = swiftclient.service.SwiftService(options={
                         "auth_version": user_pass.get('ST_AUTH_VERSION', '3'),
@@ -138,7 +143,7 @@ if SWIFT:
             to swift object
 
             :param key: Full path to the object.
-            :return: Full URL to the object for unauthenticated used for
+            :return: Full URL to the object for unauthenticated used to
                      being able to download object.
             """
             return generate_temp_url(
@@ -162,8 +167,10 @@ if SWIFT:
                                     objects=[upload_obj]
                                     )
                         if result['success']:
-                            # TODO: key should contain full url
-                            return self.generate_presigned_url(key)
+                            return '/'.join((
+                                self.config.swift_url_prefix,
+                                self.generate_presigned_url(key)
+                                ))
                         LOGGER.fatal(
                             "Falied to upload object {} with error {}".format(
                                 key,
