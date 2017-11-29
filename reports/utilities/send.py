@@ -91,12 +91,12 @@ class Postman(object):
             self.config.get('email', 'smtp_server'),
             self.config.get('email', 'smtp_port')
             )
-        if self.config.get('email', 'use_auth'):
-            with use_credentials(self.config.get('email', 'password_prefix'))\
-                    as user_pass:
-                self.server.ehlo()
-                self.server.starttls()
-                self.server.ehlo()
+        with use_credentials(self.config.get('email', 'password_prefix'))\
+                as user_pass:
+            self.server.ehlo()
+            self.server.starttls()
+            self.server.ehlo()
+            if self.config.get('email', 'use_auth'):
                 self.server.login(
                     user_pass.get(
                         'AWS_ACCESS_KEY_ID',
