@@ -9,6 +9,7 @@ REQUIRES = [
     'dateparser',
     'pbkdf2',
     'requests',
+    'gevent',
     'requests_cache',
     'pytz',
     'iso8601',
@@ -19,7 +20,8 @@ REQUIRES = [
     'systemd-python',
     'PyYaml',
     'ExtendedJournalHandler==1.0.0',
-    'repoze.lru'
+    'repoze.lru',
+    'hvac',
 ]
 EXTRA = REQUIRES + ['python-swiftclient']
 TEST_REQUIRES = REQUIRES + [
@@ -49,6 +51,7 @@ setup(
         ],
         'billing.storages': [
             's3 = reports.storages:S3Storage',
+            'memory = reports.storages:MemoryStorage',
             'swift = reports.storages:SwiftStorage[swift]'
         ]
     },

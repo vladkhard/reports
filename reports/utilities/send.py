@@ -3,8 +3,7 @@ import os.path
 import argparse
 import sys
 from datetime import datetime
-from logging.config import fileConfig
-from ConfigParser import ConfigParser
+from logging.config import dictConfig 
 
 import smtplib
 from email.mime.text import MIMEText
@@ -12,12 +11,10 @@ from email.utils import COMMASPACE
 
 from jinja2 import Environment, PackageLoader
 
-from reports.log import getLogger
+from logging import getLogger
 from reports.storages import REGISTRY
-from reports.helpers import (
-    use_credentials,
-    create_email_context_from_filename
-    )
+from reports.vault import Vault
+from reports.helpers import create_email_context_from_filename, read_config
 
 
 YES = ['yes', 'true', 1, 'y', True]
@@ -77,26 +74,23 @@ def get_program_arguments():
 class Postman(object):
 
     def __init__(self, config):
-        self.config = ConfigParser()
-        self.config.read(config)
-
+        self.config = config
         self.brokers = []
-
-        self.emails_to = dict(
-            (key, field.split(',').strip())
-            for key, field in
-            self.config.items('brokers_emails')
+        self.emails_to = self.config.get('brokers_emails')
+        self._able = True
+        self.vault = Vault(self.config)
+        try:
+            self.server = smtplib.SMTP(
+                self.config.get('email', {}).get('smtp_server'),
+                self.config.get('email', {}).get('smtp_port')
+                )
+            user_pass = self.vault.get(
+                self.config.get('email', {}).get('password_prefix')
             )
-        self.server = smtplib.SMTP(
-            self.config.get('email', 'smtp_server'),
-            self.config.get('email', 'smtp_port')
-            )
-        with use_credentials(self.config.get('email', 'password_prefix'))\
-                as user_pass:
             self.server.ehlo()
             self.server.starttls()
             self.server.ehlo()
-            if self.config.get('email', 'use_auth'):
+            if self.config.get('email', {}).get('use_auth'):
                 self.server.login(
                     user_pass.get(
                         'AWS_ACCESS_KEY_ID',
@@ -105,6 +99,9 @@ class Postman(object):
                         'AWS_SECRET_ACCESS_KEY',
                         user_pass.get('password'))
                 )
+        except smtplib.SMTPException as e:
+            LOGGER.fatal("SMTP connection failed with error: {}. Generation will ran without notifications".format(e))
+            self._able = False
 
     def render_email(self, context):
         return ENV.get_template(TEMPLATE).render(context)
@@ -112,7 +109,7 @@ class Postman(object):
     def construct_mime_message(self, context):
         recipients = self.emails_to[context['broker']]
         msg = MIMEText(self.render_email(context), 'html', 'utf-8')
-        msg['Subject'] = SUBJECT.format(dict(
+        msg['Subject'] = SUBJECT.format(**dict(
             broker=context['broker'],
             type=context['type'],
             period=context['period']
@@ -128,28 +125,32 @@ class Postman(object):
                 if (not self.brokers) or (
                         self.brokers and context['broker'] in self.brokers
                         ):
-                    self.server.sendmail(
-                        self.config.get('email', 'verified_email'),
-                        recipients,
-                        msg.as_string()
-                        )
+                    if self._able:
+                        self.server.sendmail(
+                            self.config.get('email', {}).get('verified_email'),
+                            recipients,
+                            msg.as_string()
+                            )
+        except smtplib.SMTPException as e:
+            LOGGER.fatal("Falied to send mails. Error: {}".format(e))
         finally:
-            self.server.close()
+            try:
+                self.server.close()
+            except Exception as e:
+                LOGGER.fatal("Unable to close connection "
+                             "to SMTP server. Error: {}".format(e))
 
 
 class Porter(object):
 
-    def __init__(self, config_file_path, timestamp="", brokers=[]):
-        self.config_file_path = config_file_path
-        self.config = ConfigParser()
-        self.config.read(self.config_file_path)
-        fileConfig(self.config_file_path)
-        storage = REGISTRY.get(self.config.get('storage', 'type').strip())
+    def __init__(self, config, timestamp="", brokers=[]):
+        self.config = config 
+        storage = REGISTRY.get(self.config['storage'].get('type').strip())
         if not storage:
             LOGGER.fatal("Unsuppoted storage: {}".format(storage))
             sys.exit(1)
-        self.storage = storage(self.config_file_path)
-        self.postman = Postman(self.config_file_path)
+        self.storage = storage(self.config)
+        self.postman = Postman(self.config)
         if not timestamp:
             timestamp = datetime.now().strftime("%Y-%m-%d/%H-%M-%S-%f")
         self.timestamp = timestamp
@@ -171,14 +172,17 @@ class Porter(object):
         entries = []
         for file in files:
             entry = create_email_context_from_filename(os.path.basename(file))
-            entry['link '] = self.storage.upload_file(file, self.timestamp)
+            entry['link'] = self.storage.upload_file(file, self.timestamp)
+            LOGGER.info("URL for {} {}".format(entry['broker'], entry['link']))
             entries.append(entry)
         return entries
 
 
 def run():
     args = get_program_arguments()
-    porter = Porter(args.config, args.timestamp, args.brokers)
+    config = read_config(args.config)
+    dictConfig(config)
+    porter = Porter(config, args.timestamp, args.brokers)
 
     if args.exists:
         if not args.timestamp:

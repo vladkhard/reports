@@ -1,9 +1,11 @@
+from logging.config import dictConfig 
 from reports.core import BaseUtility, NEW_ALG_DATE
 from reports.helpers import (
     thresholds_headers,
     value_currency_normalize,
     get_arguments_parser,
-    Kind
+    Kind,
+    read_config
 )
 
 
@@ -85,9 +87,11 @@ def run():
              )
 
     args = parser.parse_args()
+    config = read_config(args.config) 
+    dictConfig(config)
     utility = RefundsUtility(
         args.broker, args.period,
-        args.config, timezone=args.timezone)
+        config, timezone=args.timezone)
 
     utility.kinds = args.kind
     utility.run()

@@ -1,4 +1,6 @@
 import os.path
+import shutil
+from tempfile import NamedTemporaryFile
 from ConfigParser import ConfigParser
 
 import boto3
@@ -7,8 +9,8 @@ from botocore.exceptions import ClientError
 from abc import ABCMeta, abstractmethod
 from pkg_resources import iter_entry_points, DistributionNotFound
 
-from reports.helpers import use_credentials
-from reports.log import getLogger
+from reports.vault import Vault
+from logging import getLogger
 
 try:
     import swiftclient.service
@@ -25,13 +27,12 @@ LOGGER = getLogger("BILLING")
 
 class Config(object):
 
-    def __init__(self, config_file_path):
-        self.config = ConfigParser()
-        self.config.read(config_file_path)
-        self.type = self.config.get('storage', 'type')
-        self.bucket = self.config.get(self.type, 'bucket')
-        self.expires = self.config.get(self.type, 'expires')
-        self.password_prefix = self.config.get(self.type, 'password_prefix')
+    def __init__(self, config):
+        self.config = config
+        self.type = self.config.get('storage').get('type')
+        self.bucket = self.config.get(self.type).get('bucket')
+        self.expires = self.config.get(self.type).get('expires')
+        self.password_prefix = self.config.get(self.type).get('password_prefix')
 
 
 class BaseStorate(object):
@@ -59,18 +60,57 @@ class BaseStorate(object):
         """
 
 
+class MemoryStorage(BaseStorate):
+    storage = {}
+
+    def __init__(self, config):
+        self.config = Config(config)
+        self.vault = Vault(config)
+        user_pass = self.vault.get(self.config.password_prefix)
+        LOGGER.debug("Inited memory storage with user: {} password: {}".format(
+            user_pass.get("user"),
+            user_pass.get('password')
+            ))
+
+    def generate_presigned_url(self, key):
+        return "file://{}".format(self.storage[key])
+
+    def upload_file(self, file, timestamp):
+        key = '/'.join((timestamp, os.path.basename(file)))
+        with NamedTemporaryFile(mode='w+') as tmp_file:
+            with open(file, 'r') as in_file:
+                shutil.copyfileobj(in_file, tmp_file)
+            self.storage[key] = tmp_file.name
+        return self.generate_presigned_url(key)
+
+    def list_objects(self, prefix):
+        for k, v in self.storage.items():
+            if k.startswith(prefix):
+                yield k
+
+
 class S3Storage(BaseStorate):
 
     def __init__(self, config):
         self.config = Config(config)
         self.client = boto3.client
-        with use_credentials(self.config.password_prefix) as user_pass:
-            self.storage = boto3.client(
-                's3',
-                aws_access_key_id=user_pass.get('AWS_ACCESS_KEY_ID', 'AWS_ACCESS_KEY_ID'),
-                aws_secret_access_key=user_pass.get('AWS_SECRET_ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY'),
-            #    region_name=user_pass.get('AWS_DEFAULT_REGION', 'AWS_DEFAULT_REGION')
+        self.vault = Vault(config)
+        user_pass = self.vault.get(self.config.password_prefix)
+        self.storage = boto3.client(
+            's3',
+            aws_access_key_id=user_pass.get(
+                'AWS_ACCESS_KEY_ID',
+                str(user_pass.get('user', 'AWS_ACCESS_KEY_ID'))
+                ),
+            aws_secret_access_key=user_pass.get(
+                'AWS_SECRET_ACCESS_KEY',
+                str(user_pass.get('password', 'AWS_SECRET_ACCESS_KEY'))
+                ),
+            region_name=user_pass.get(
+                'AWS_DEFAULT_REGION',
+                str(user_pass.get('region', 'AWS_SECRET_ACCESS_KEY'))
                 )
+            )
 
     def generate_presigned_url(self, key):
         return self.client.generate_presigned_url(
@@ -112,9 +152,9 @@ class S3Storage(BaseStorate):
 
 if SWIFT:
     class SwiftConfig(Config):
-        def __init__(self, config_file_path):
-            super(self, SwiftConfig).__init__(config_file_path)
-            self.swift_url_prefix = self.config.get(self.type, 'url_prefix')
+        def __init__(self, config):
+            super(self, SwiftConfig).__init__(config)
+            self.swift_url_prefix = self.config.get(self.type).get('url_prefix')
 
     class SwiftStorage(BaseStorate):
 
@@ -125,17 +165,18 @@ if SWIFT:
             :param config: System path to configuration file.
             """
             self.config = SwiftConfig(config)
-            with use_credentials(self.config.password_prefix) as user_pass:
-                self.swift = swiftclient.service.SwiftService(options={
-                        "auth_version": user_pass.get('ST_AUTH_VERSION', '3'),
-                        "os_username": user_pass.get('OS_USERNAME'),
-                        "os_user_domain_name": user_pass.get('OS_USER_DOMAIN_NAME', 'default'),
-                        "os_password": user_pass.get('OS_PASSWORD'),
-                        "os_project_name": user_pass.get('OS_PROJECT_NAME'),
-                        "os_project_domain_name": user_pass.get('OS_PROJECT_DOMAIN_NAME', 'default'),
-                        "os_auth_url": user_pass.get('OS_AUTH_URL'),
-                    })
-                self.temporary_url_key = user_pass.get('temp_url_key')
+            self.vault = Vault(self.config)
+            user_pass = self.vault.get(self.config.password_prefix)
+            self.swift = swiftclient.service.SwiftService(options={
+                    "auth_version": user_pass.get('ST_AUTH_VERSION', '3'),
+                    "os_username": user_pass.get('OS_USERNAME'),
+                    "os_user_domain_name": user_pass.get('OS_USER_DOMAIN_NAME', 'default'),
+                    "os_password": user_pass.get('OS_PASSWORD'),
+                    "os_project_name": user_pass.get('OS_PROJECT_NAME'),
+                    "os_project_domain_name": user_pass.get('OS_PROJECT_DOMAIN_NAME', 'default'),
+                    "os_auth_url": user_pass.get('OS_AUTH_URL'),
+                })
+            self.temporary_url_key = user_pass.get('temp_url_key')
 
         def generate_presigned_url(self, key):
             """

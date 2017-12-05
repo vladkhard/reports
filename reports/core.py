@@ -8,8 +8,8 @@ import requests_cache
 from requests.exceptions import RequestException
 from yaml.scanner import ScannerError
 from couchdb.design import ViewDefinition
-
-from reports.log import getLogger
+from logging import getLogger
+#from reports.log import getLogger
 from reports.config import Config
 from reports.design import bids_owner_date, tenders_owner_date, jsonpatch
 from reports.helpers import prepare_report_interval, prepare_result_file_name, value_currency_normalize
@@ -29,7 +29,6 @@ class BaseUtility(object):
             ):
         self.broker = broker
         self.period = period
-        self.config_path = config
         self.timezone = timezone
         self.operation = operation
         self.threshold_date = '2017-01-01T00:00+02:00'
@@ -114,7 +113,11 @@ class BaseUtility(object):
                 writer.writerow(row)
 
     def run(self):
-        self.Logger.info("Start generating")
+        self.Logger.info("Start generating {} for {} for period: {}".format(
+            self.operation,
+            self.broker,
+            self.period
+            ))
         self.write_csv()
 
 

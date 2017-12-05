@@ -7,11 +7,10 @@ import json
 import requests_cache
 import re
 import datetime
-import subprocess as sb
+from yaml import load
 from dateutil.parser import parse
-from contextlib import contextmanager
 
-from reports.log import getLogger
+from logging import getLogger
 
 
 requests_cache.install_cache('exchange_cache')
@@ -287,26 +286,8 @@ def get_out_name(files):
     return out_name
 
 
-@contextmanager
-def use_credentials(key):
-    if key:
-        try:
-            yield dict(
-                item.split('=') for item in
-                sb.check_output('pass {}'.format(key), shell=True).split('\n')
-                if item
-            )
-        except Exception as e:
-            LOGGER.fatal("unable to get credentials from"
-                         " pass to {}. error: {}".format(key, e))
-            yield {}
-    else:
-        LOGGER.warning("Empty key path for for password store")
-        yield {}
-
-
 def create_email_context_from_filename(file_name):
-    broker, period, ops = re.finall(RE, file_name)
+    broker, period, ops = next(iter(re.findall(RE, file_name)))
     if ops:
         ops = ops.split('-')
     type = ' and '.join(ops) if len(ops) == 2 else ', '.join(ops)
@@ -316,3 +297,7 @@ def create_email_context_from_filename(file_name):
         'encrypted': bool('bids' in ops),
         'period': period
     }
+
+def read_config(path):
+    with open(path) as _in:
+        return load(_in)

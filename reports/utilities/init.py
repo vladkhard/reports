@@ -1,10 +1,9 @@
 import argparse
 from couchdb import Server, Session
-from ConfigParser import ConfigParser
 from pbkdf2 import PBKDF2
-from logging.config import fileConfig
+from logging.config import dictConfig 
 
-from reports.helpers import create_db_url
+from reports.helpers import create_db_url, read_config
 from reports.log import getLogger
 
 
@@ -34,18 +33,18 @@ def couchdb_connection(config):
     LOGGER.info("Start database initialization")
 
     # CouchDB connection
-    db_name = config.get('db', 'name')
-    db_host = config.get('db', 'host')
-    db_port = config.get('db', 'port')
-    admin_name = config.get('admin', 'username')
-    admin_pass = config.get('admin', 'password')
+    db_name = config.get('db').get('name')
+    db_host = config.get('db').get('host')
+    db_port = config.get('db').get('port')
+    admin_name = config.get('admin').get('username')
+    admin_pass = config.get('admin').get('password')
     aserver = Server(
         create_db_url(db_host, db_port, admin_name, admin_pass),
         session=Session(retry_delays=range(10)))
     users_db = aserver['_users']
 
-    username = config.get('user', 'username')
-    password = config.get('user', 'password')
+    username = config.get('user').get('username')
+    password = config.get('user').get('password')
 
     user_doc = users_db.get(
         'org.couchdb.user:{}'.format(username),
@@ -90,11 +89,8 @@ def run():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c')
     args = parser.parse_args()
-
-    config = ConfigParser()
-    config.read(args.c)
-    fileConfig(args.c)
-
+    config = read_config(args.c) 
+    dictConfig(config)
     couchdb_connection(config)
 
 

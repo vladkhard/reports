@@ -1,8 +1,9 @@
+from logging.config import dictConfig 
 from reports.core import BaseBidsUtility, NEW_ALG_DATE
 from reports.helpers import (
     thresholds_headers,
-    value_currency_normalize,
-    get_arguments_parser
+    get_arguments_parser,
+    read_config
 )
 
 
@@ -61,9 +62,11 @@ class InvoicesUtility(BaseBidsUtility):
 def run():
     parser = get_arguments_parser()
     args = parser.parse_args()
+    config = read_config(args.config)
+    dictConfig(config)
     utility = InvoicesUtility(
         args.broker, args.period,
-        args.config, timezone=args.timezone)
+        config, timezone=args.timezone)
     utility.run()
 
 
