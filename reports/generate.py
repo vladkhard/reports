@@ -104,7 +104,7 @@ def create_all_bids_csv(brokers, period):
 
 def get_password_for_broker(broker):
     key = os.path.join(
-            CONFIG['brokers_keys'].get('password_prefix')
+            CONFIG['brokers_keys'].get('passwords_prefix')
             )
     try:
         password = VAULT.get(key, {}).get(broker)
