@@ -1,5 +1,5 @@
 storage "file" {
-	path = "/home/yshalenyk/work/op/billing/var/vault/vault"
+	path = "{{parts.buildout.directory}}/var/vault/vault"
 }
 
 listener "tcp" {
