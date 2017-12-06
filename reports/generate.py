@@ -203,7 +203,7 @@ def clean_up(brokers, period):
     for file in files:
         try:
             os.remove(os.path.join(WORKDIR, file))
-            LOGGER.fatal("Cleaned {}".format(file))
+            LOGGER.warning("Cleaned {}".format(file))
         except (OSError, IOError) as e:
             LOGGER.fatal("Error {} while removing file {}".format(e, file))
 
