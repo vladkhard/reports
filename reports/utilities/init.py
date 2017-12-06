@@ -1,10 +1,10 @@
 import argparse
 from couchdb import Server, Session
 from pbkdf2 import PBKDF2
+from logging import getLogger
 from logging.config import dictConfig 
 
 from reports.helpers import create_db_url, read_config
-from reports.log import getLogger
 
 
 SECURITY = {
