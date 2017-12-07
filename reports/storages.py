@@ -31,7 +31,7 @@ class Config(object):
         self.config = config
         self.type = self.config.get('storage').get('type')
         self.bucket = self.config.get(self.type).get('bucket')
-        self.expires = self.config.get(self.type).get('expires')
+        self.expires = self.config.get(self.type).get('expire')
         self.password_prefix = self.config.get(self.type).get('passwords_prefix')
 
 
