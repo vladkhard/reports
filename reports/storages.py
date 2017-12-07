@@ -179,6 +179,15 @@ if SWIFT:
                 })
             self.temporary_url_key = user_pass.get('temp_url_key')
             self.project = user_pass
+            with self.swift as swift:
+                stats = swift.stat()
+                self.account = dict(stats.get('items', {})).get('Account')
+                if not self.account:
+                    LOGGER.warn("Unable to get Account from swift stats")
+                temp_url_key = stats['headers'].get('x-account-meta-temp-url-key')
+                if temp_url_key:
+                    if not self.temporary_url_key or (self.temporary_url_key != str(temp_url_key)):
+                        self.temporary_url_key = temp_url_key
 
         def generate_presigned_url(self, key):
             """
@@ -189,18 +198,18 @@ if SWIFT:
             :return: Full URL to the object for unauthenticated used to
                      being able to download object.
             """
-            full_path = "{}/{}/{}{}".format(
-                    self.project.get('auth_version'),
-                    self.project.get('os_project_name'),
+            full_path = "/v1/{}/{}{}".format(
+                    self.account,
                     self.config.bucket,
                     key
                     )
-            return generate_temp_url(
+            url = generate_temp_url(
                     full_path,
                     self.config.expires,
                     self.temporary_url_key,
                     'GET'
                     )
+            return url
 
         def upload_file(self, file, timestamp):
             with open(file, 'r') as upload_stream:
