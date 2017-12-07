@@ -108,7 +108,7 @@ class S3Storage(BaseStorate):
                 ),
             region_name=user_pass.get(
                 'AWS_DEFAULT_REGION',
-                str(user_pass.get('region', 'AWS_SECRET_ACCESS_KEY'))
+                str(user_pass.get('region', 'eu-west-2'))
                 )
             )
 
@@ -168,13 +168,13 @@ if SWIFT:
             self.vault = Vault(self.config)
             user_pass = self.vault.get(self.config.password_prefix)
             self.swift = swiftclient.service.SwiftService(options={
-                    "auth_version": user_pass.get('ST_AUTH_VERSION', '3'),
-                    "os_username": user_pass.get('OS_USERNAME'),
-                    "os_user_domain_name": user_pass.get('OS_USER_DOMAIN_NAME', 'default'),
-                    "os_password": user_pass.get('OS_PASSWORD'),
-                    "os_project_name": user_pass.get('OS_PROJECT_NAME'),
-                    "os_project_domain_name": user_pass.get('OS_PROJECT_DOMAIN_NAME', 'default'),
-                    "os_auth_url": user_pass.get('OS_AUTH_URL'),
+                    "auth_version": user_pass.get('auth_version', '3'),
+                    "os_username": user_pass.get('os_username'),
+                    "os_user_domain_name": user_pass.get('os_user_domain_name', 'default'),
+                    "os_password": user_pass.get('os_password'),
+                    "os_project_name": user_pass.get('os_project_name'),
+                    "os_project_domain_name": user_pass.get('os_project_domain_name', 'default'),
+                    "os_auth_url": user_pass.get('os_auth_url'),
                 })
             self.temporary_url_key = user_pass.get('temp_url_key')
 
