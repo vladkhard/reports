@@ -213,11 +213,13 @@ if SWIFT:
                                 if 'object' in result:
                                     LOGGER.info("Action {} with object {} success: {}. Reason: {}. x-trans-id: {}".format(
                                         result['action'], result['object'], result['success'], result['reason'],
-                                        result['response_dict'].get('x-trans-id')
+                                        result['response_dict']['headers'].get('x-trans-id')
                                         ))
                                 else:
-                                    LOGGER.info("Operation {} successfull. trans-id {}".format(
-                                        result['action'], result['response_dict'].get('x-trans-id'))
+                                    LOGGER.info("Operation {} successfull. Reason: {}. x-trans-id {}".format(
+                                        result['action'],
+                                        result['response_dict']['reason'],
+                                        result['response_dict']['headers'].get('x-trans-id'))
                                         )
                             else:
                                 LOGGER.fatal(
