@@ -175,6 +175,7 @@ if SWIFT:
                     "os_project_name": user_pass.get('os_project_name'),
                     "os_project_domain_name": user_pass.get('os_project_domain_name', 'default'),
                     "os_auth_url": user_pass.get('os_auth_url'),
+                    "insecure": user_pass.get('insecure')
                 })
             self.temporary_url_key = user_pass.get('temp_url_key')
 
@@ -203,21 +204,35 @@ if SWIFT:
                             upload_stream,
                             object_name=key
                             )
-                        result = swift.upload(
+                        results = swift.upload(
                                     container=self.config.bucket,
                                     objects=[upload_obj]
                                     )
-                        if next(list(result['success'])):
+                        for result in results:
+                            if result['success']:
+                                if 'object' in result:
+                                    LOGGER.info("Action {} with object {} success: {}. Reason: {}. x-trans-id: {}".format(
+                                        result['action'], result['object'], result['success'], result['reason'],
+                                        result['response_dict'].get('x-trans-id')
+                                        ))
+                                else:
+                                    LOGGER.info("Operation {} successfull. trans-id {}".format(
+                                        result['action'], result['response_dict'].get('x-trans-id'))
+                                        )
+                            else:
+                                LOGGER.fatal(
+                                    "Operation {} falied with error {}".format(
+                                        result['action'],
+                                        result['error']
+                                    ))
+                                LOGGER.fatal("Error traceback {}".format(result.get('traceback')))
+                        if all((res['success'] for res in results)):
                             return '/'.join((
-                                self.config.swift_url_prefix,
-                                self.generate_presigned_url(key)
-                                ))
-                        LOGGER.fatal(
-                            "Falied to upload object {} with error {}".format(
-                                key,
-                                result['error']
-                            ))
-                        return ""
+                                    self.config.swift_url_prefix,
+                                    self.generate_presigned_url(key)
+                                    ))
+                        else:
+                            return ""
 
                 except swiftclient.service.SwiftError as error:
                     LOGGER.fatal(
