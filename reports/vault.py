@@ -7,9 +7,9 @@ class Config(object):
     def __init__(self, config):
         self.config = config
         self.vault_addr = os.environ.get('VAULT_ADDR') or \
-            self.config.get('vault', 'address')
+            self.config.get('vault', {}).get('address')
         self.token = os.environ.get('VAULT_TOKEN') or \
-            self.config.get('vault', 'token')
+            self.config.get('vault', {}).get('token')
         self.base = self.config.get('brokers_keys', 'path')
 
 

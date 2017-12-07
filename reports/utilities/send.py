@@ -149,7 +149,7 @@ class Porter(object):
         if not storage:
             LOGGER.fatal("Unsuppoted storage: {}".format(storage))
             sys.exit(1)
-        self.storage = storage(self.config)
+        self.storage = storage(config)
         self.postman = Postman(self.config)
         if not timestamp:
             timestamp = datetime.now().strftime("%Y-%m-%d/%H-%M-%S-%f")

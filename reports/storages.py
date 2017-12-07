@@ -153,7 +153,7 @@ class S3Storage(BaseStorate):
 if SWIFT:
     class SwiftConfig(Config):
         def __init__(self, config):
-            super(self, SwiftConfig).__init__(config)
+            super(SwiftConfig, self).__init__(config)
             self.swift_url_prefix = self.config.get(self.type).get('url_prefix')
 
     class SwiftStorage(BaseStorate):
@@ -165,7 +165,7 @@ if SWIFT:
             :param config: System path to configuration file.
             """
             self.config = SwiftConfig(config)
-            self.vault = Vault(self.config)
+            self.vault = Vault(config)
             user_pass = self.vault.get(self.config.password_prefix)
             self.swift = swiftclient.service.SwiftService(options={
                     "auth_version": user_pass.get('auth_version', '3'),
@@ -207,7 +207,7 @@ if SWIFT:
                                     container=self.config.bucket,
                                     objects=[upload_obj]
                                     )
-                        if result['success']:
+                        if next(list(result['success'])):
                             return '/'.join((
                                 self.config.swift_url_prefix,
                                 self.generate_presigned_url(key)

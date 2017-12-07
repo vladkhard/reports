@@ -4,15 +4,15 @@ import os.path
 import ConfigParser
 
 from reports.helpers import get_out_name
-from reports.log import getLogger
+from logging import getLogger
 
 
-#LOGGER = getLogger("BILLING")
+LOGGER = getLogger("BILLING")
 
 
 def compress(files, basedir, name, password):
     zipname = os.path.join(basedir, name)
-    #LOGGER.info("Creating archive {}".format(zipname))
+    LOGGER.info("Creating archive {}".format(zipname))
     pyminizip.compress_multiple(
         [os.path.join(basedir, file) for file in files],
         os.path.join(basedir, name),
@@ -45,4 +45,4 @@ def run():
         zip_name,
         args.password
     )
-    #LOGGER.info('Created: {}'.format(name))
+    LOGGER.info('Created: {}'.format(name))

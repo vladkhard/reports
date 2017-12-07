@@ -23,7 +23,7 @@ REQUIRES = [
     'repoze.lru',
     'hvac',
 ]
-EXTRA = REQUIRES + ['python-swiftclient']
+EXTRA = REQUIRES + ['python-swiftclient', 'python-keystoneclient']
 TEST_REQUIRES = REQUIRES + [
     'mock'
 ]
