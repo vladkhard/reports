@@ -212,7 +212,9 @@ if SWIFT:
                             if result['success']:
                                 if 'object' in result:
                                     LOGGER.info("Action {} with object {} success: {}. Reason: {}. x-trans-id: {}".format(
-                                        result['action'], result['object'], result['success'], result['reason'],
+                                        result['action'], result['object'],
+                                        result['success'],
+                                        result['response_dict']['reason'],
                                         result['response_dict']['headers'].get('x-trans-id')
                                         ))
                                 else:
