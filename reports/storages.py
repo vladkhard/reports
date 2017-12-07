@@ -178,6 +178,7 @@ if SWIFT:
                     "insecure": user_pass.get('insecure')
                 })
             self.temporary_url_key = user_pass.get('temp_url_key')
+            self.project = user_pass
 
         def generate_presigned_url(self, key):
             """
@@ -188,8 +189,14 @@ if SWIFT:
             :return: Full URL to the object for unauthenticated used to
                      being able to download object.
             """
+            full_path = "{}/{}/{}{}".format(
+                    self.project.get('auth_version'),
+                    self.project.get('os_project_name'),
+                    self.config.bucket,
+                    key
+                    )
             return generate_temp_url(
-                    key,
+                    full_path,
                     self.config.expires,
                     self.temporary_url_key,
                     'GET'
