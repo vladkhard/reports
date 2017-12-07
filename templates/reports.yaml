@@ -52,7 +52,7 @@ email:
 
 
 brokers_keys:
-  passwords_prefix:  {{ password_prefix }}
+  passwords_prefix:  {{ passwords_prefix }}
 
 version: 1
 disable_existing_loggers: false

@@ -32,7 +32,7 @@ class Config(object):
         self.type = self.config.get('storage').get('type')
         self.bucket = self.config.get(self.type).get('bucket')
         self.expires = self.config.get(self.type).get('expires')
-        self.password_prefix = self.config.get(self.type).get('password_prefix')
+        self.password_prefix = self.config.get(self.type).get('passwords_prefix')
 
 
 class BaseStorate(object):
