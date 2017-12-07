@@ -4,7 +4,6 @@ import arrow
 import iso8601
 import requests
 import json
-import requests_cache
 import re
 import datetime
 from yaml import load
@@ -13,7 +12,6 @@ from dateutil.parser import parse
 from logging import getLogger
 
 
-requests_cache.install_cache('exchange_cache')
 RE = re.compile(r'(^.*)@(\d{4}-\d{2}-\d{2}--\d{4}-\d{2}-\d{2})?-([a-z\-]*)\.zip')
 LOGGER = getLogger("BILLING")
 
