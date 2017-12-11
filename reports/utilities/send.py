@@ -77,7 +77,6 @@ class Postman(object):
         self.config = config
         self.brokers = []
         self.emails_to = self.config.get('brokers_emails')
-        self._able = True
         self.vault = Vault(self.config)
         try:
             self.server = smtplib.SMTP(
@@ -100,8 +99,15 @@ class Postman(object):
                         user_pass.get('password'))
                 )
         except smtplib.SMTPException as e:
-            LOGGER.fatal("SMTP connection failed with error: {}. Generation will ran without notifications".format(e))
-            self._able = False
+            LOGGER.fatal(
+                "SMTP connection failed with error: {}. :"
+                "Generation will ran without notifications".format(e))
+            self.server = None
+        except Exception as e:
+            LOGGER.fatal(
+                "Uncaught error while connecting to SMTP: Error: {}."
+                "Generation will ran without notifications".format(e))
+            self.server = None
 
     def render_email(self, context):
         return ENV.get_template(TEMPLATE).render(context)
@@ -125,7 +131,7 @@ class Postman(object):
                 if (not self.brokers) or (
                         self.brokers and context['broker'] in self.brokers
                         ):
-                    if self._able:
+                    if self.server:
                         self.server.sendmail(
                             self.config.get('email', {}).get('verified_email'),
                             recipients,
