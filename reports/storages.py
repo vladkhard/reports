@@ -1,7 +1,6 @@
 import os.path
 import shutil
 from tempfile import NamedTemporaryFile
-from ConfigParser import ConfigParser
 
 import boto3
 from botocore.exceptions import ClientError
@@ -154,7 +153,9 @@ if SWIFT:
     class SwiftConfig(Config):
         def __init__(self, config):
             super(SwiftConfig, self).__init__(config)
-            self.swift_url_prefix = self.config.get(self.type).get('url_prefix')
+            self.swift_url_prefix = self.config.get(self.type).get(
+                    'url_prefix'
+                    )
 
     class SwiftStorage(BaseStorate):
 
@@ -162,7 +163,7 @@ if SWIFT:
             """
             Swift client wrapper
 
-            :param config: System path to configuration file.
+            :param config: global configuration dict
             """
             self.config = SwiftConfig(config)
             self.vault = Vault(config)
@@ -170,24 +171,28 @@ if SWIFT:
             self.swift = swiftclient.service.SwiftService(options={
                     "auth_version": user_pass.get('auth_version', '3'),
                     "os_username": user_pass.get('os_username'),
-                    "os_user_domain_name": user_pass.get('os_user_domain_name', 'default'),
+                    "os_user_domain_name": user_pass.get(
+                        'os_user_domain_name', 'default'
+                        ),
                     "os_password": user_pass.get('os_password'),
                     "os_project_name": user_pass.get('os_project_name'),
-                    "os_project_domain_name": user_pass.get('os_project_domain_name', 'default'),
+                    "os_project_domain_name": user_pass.get(
+                        'os_project_domain_name', 'default'
+                        ),
                     "os_auth_url": user_pass.get('os_auth_url'),
                     "insecure": user_pass.get('insecure')
                 })
             self.temporary_url_key = user_pass.get('temp_url_key')
             self.project = user_pass
-            with self.swift as swift:
-                stats = swift.stat()
-                self.account = dict(stats.get('items', {})).get('Account')
-                if not self.account:
-                    LOGGER.warn("Unable to get Account from swift stats")
-                temp_url_key = stats['headers'].get('x-account-meta-temp-url-key')
-                if temp_url_key:
-                    if not self.temporary_url_key or (self.temporary_url_key != str(temp_url_key)):
-                        self.temporary_url_key = temp_url_key
+            stats = self.swift.stat()
+            self.account = dict(stats.get('items', {})).get('Account')
+            if not self.account:
+                LOGGER.warn("Unable to get Account from swift stats")
+            temp_url_key = stats['headers'].get('x-account-meta-temp-url-key')
+            if temp_url_key:
+                if not self.temporary_url_key or\
+                        (str(self.temporary_url_key) != str(temp_url_key)):
+                    self.temporary_url_key = temp_url_key
 
         def generate_presigned_url(self, key):
             """
@@ -198,61 +203,69 @@ if SWIFT:
             :return: Full URL to the object for unauthenticated used to
                      being able to download object.
             """
-            full_path = "/v1/{}/{}{}".format(
+            full_path = "/v1/{}/{}/{}".format(
                     self.account,
                     self.config.bucket,
                     key
                     )
-            url = generate_temp_url(
+            return generate_temp_url(
                     full_path,
                     self.config.expires,
                     self.temporary_url_key,
                     'GET'
                     )
-            return url
 
         def upload_file(self, file, timestamp):
             with open(file, 'r') as upload_stream:
                 try:
-                    with self.swift as swift:
-                        key = '/'.join((timestamp, os.path.basename(file)))
-                        upload_obj = swiftclient.service.SwiftUploadObject(
-                            upload_stream,
-                            object_name=key
-                            )
-                        results = swift.upload(
-                                    container=self.config.bucket,
-                                    objects=[upload_obj]
-                                    )
-                        for result in results:
-                            if result['success']:
-                                if 'object' in result:
-                                    LOGGER.info("Action {} with object {} success: {}. Reason: {}. x-trans-id: {}".format(
+                    key = '/'.join((timestamp, os.path.basename(file)))
+                    upload_obj = swiftclient.service.SwiftUploadObject(
+                        upload_stream,
+                        object_name=key
+                        )
+                    results = self.swift.upload(
+                                container=self.config.bucket,
+                                objects=[upload_obj]
+                                )
+                    for result in results:
+                        if result['success']:
+                            if 'object' in result:
+                                LOGGER.info(
+                                    "Action {} with object {} success: {}. :"
+                                    "Reason: {}. x-trans-id: {}".format(
                                         result['action'], result['object'],
                                         result['success'],
                                         result['response_dict']['reason'],
-                                        result['response_dict']['headers'].get('x-trans-id')
+                                        result['response_dict']['headers'].get(
+                                            'x-trans-id'
+                                            )
                                         ))
-                                else:
-                                    LOGGER.info("Operation {} successfull. Reason: {}. x-trans-id {}".format(
+                            else:
+                                LOGGER.info(
+                                    "Operation {} successfull. "
+                                    "Reason: {}. x-trans-id {}".format(
                                         result['action'],
                                         result['response_dict']['reason'],
-                                        result['response_dict']['headers'].get('x-trans-id'))
-                                        )
-                            else:
-                                LOGGER.fatal(
-                                    "Operation {} falied with error {}".format(
-                                        result['action'],
-                                        result['error']
-                                    ))
-                                LOGGER.fatal("Error traceback {}".format(result.get('traceback')))
-                        if all((res['success'] for res in results)):
-                            return '/'.join((
-                                    self.config.swift_url_prefix,
-                                    self.generate_presigned_url(key)
-                                    ))
+                                        result['response_dict']['headers'].get(
+                                            'x-trans-id'
+                                            ))
+                                    )
                         else:
-                            return ""
+                            LOGGER.fatal(
+                                "Operation {} falied with error {}".format(
+                                    result['action'],
+                                    result['error']
+                                ))
+                            LOGGER.fatal("Error traceback {}".format(
+                                result.get('traceback'))
+                                )
+                    if all((res['success'] for res in results)):
+                        tail = self.generate_presigned_url(key)
+                        if not self.config.swift_url_prefix.endswith('/'):
+                            return self.config.swift_url_prefix + tail
+                        return self.config.swift_url_prefix[:-1] + tail
+                    else:
+                        return ""
 
                 except swiftclient.service.SwiftError as error:
                     LOGGER.fatal(
@@ -263,27 +276,32 @@ if SWIFT:
                     return ""
 
         def list_objects(self, prefix):
-            with self.swift as swift:
-                try:
-                    result = swift.list(
-                            container=self.container,
-                            prefix=prefix
+            try:
+                result = next(self.swift.list(
+                        container=self.config.bucket,
+                        options={"prefix": prefix}
+                        ))
+                if result['success']:
+                    LOGGER.info(
+                        'Action `{}` on container {} success: {}'.format(
+                            result.get('action'),
+                            result.get('container'),
+                            result['success']
+                        ))
+                    return [item['name'] for item in result['listing']]
+                LOGGER.fatal(
+                        "Request  status {} with error {}".format(
+                            result['success'], result['error']
                             )
-                    if result['success']:
-                        return result['listing']
-                    LOGGER.fatal(
-                            "Request  status {} with error {}".format(
-                                result['success'], result['error']
-                                )
-                            )
-                    return []
-                except swiftclient.service.SwiftError as e:
-                    LOGGER.fatal(
-                            "Error {} on getting listint of "
-                            "objects of {} with prefix {}".format(
-                                e, self.container, prefix)
-                            )
-                    return []
+                        )
+                return []
+            except swiftclient.service.SwiftError as e:
+                LOGGER.fatal(
+                        "Error {} on getting listint of "
+                        "objects of {} with prefix {}".format(
+                            e, self.container, prefix)
+                        )
+                return []
 
 
 for storage in iter_entry_points(PKG_NAMESPACE):
