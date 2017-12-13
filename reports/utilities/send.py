@@ -169,10 +169,10 @@ class Porter(object):
         entries = []
         for item in self.storage.list_objects(self.timestamp):
             entry = create_email_context_from_filename(
-                os.path.basename(item['Key'])
+                os.path.basename(item)
                 )
             entry['link'] = self.storage.generate_presigned_url(
-                    item['Key']
+                    item
                     )
             entries.append(entry)
         return entries
