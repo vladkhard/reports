@@ -79,7 +79,7 @@ class Postman(object):
         self.emails_to = self.config.get('brokers_emails')
         self.vault = Vault(self.config)
 
-     def render_email(self, context):
+    def render_email(self, context):
         return ENV.get_template(TEMPLATE).render(context)
 
     def construct_mime_message(self, context):
@@ -95,38 +95,37 @@ class Postman(object):
         return (recipients, msg)
 
     def send_emails(self, msgs):
-       try:
+        try:
             self.server = smtplib.SMTP(
-                self.config.get('email', {}).get('smtp_server'),
-                self.config.get('email', {}).get('smtp_port')
-                )
+                    self.config.get('email', {}).get('smtp_server'),
+                    self.config.get('email', {}).get('smtp_port')
+                    )
             user_pass = self.vault.get(
-                self.config.get('email', {}).get('password_prefix')
-            )
+                    self.config.get('email', {}).get('password_prefix')
+                    )
             self.server.ehlo()
             if self.config.get('use_tls', True):
                 self.server.starttls()
                 self.server.ehlo()
             if self.config.get('email', {}).get('use_auth'):
                 self.server.login(
-                    user_pass.get(
-                        'AWS_ACCESS_KEY_ID',
-                        user_pass.get('user')),
-                    user_pass.get(
-                        'AWS_SECRET_ACCESS_KEY',
-                        user_pass.get('password'))
-                )
+                        user_pass.get(
+                            'AWS_ACCESS_KEY_ID',
+                            user_pass.get('user')),
+                        user_pass.get(
+                            'AWS_SECRET_ACCESS_KEY',
+                            user_pass.get('password'))
+                        )
         except smtplib.SMTPException as e:
             LOGGER.fatal(
-                "SMTP connection failed with error: {}. :"
-                "Generation will ran without notifications".format(e))
+                    "SMTP connection failed with error: {}. :"
+                    "Generation will ran without notifications".format(e))
             self.server = None
         except Exception as e:
             LOGGER.fatal(
-                "Uncaught error while connecting to SMTP: Error: {}."
-                "Generation will ran without notifications".format(e))
+                    "Uncaught error while connecting to SMTP: Error: {}."
+                    "Generation will ran without notifications".format(e))
             self.server = None
-
 
         try:
             for context in msgs:
@@ -136,10 +135,10 @@ class Postman(object):
                         ):
                     if self.server:
                         self.server.sendmail(
-                            self.config.get('email', {}).get('verified_email'),
-                            recipients,
-                            msg.as_string()
-                            )
+                                self.config.get('email', {}).get('verified_email'),
+                                recipients,
+                                msg.as_string()
+                                )
                         LOGGER.info('Sent mail to {}'.format(recipients))
         except smtplib.SMTPException as e:
             LOGGER.fatal("Falied to send mails. Error: {}".format(e))
@@ -148,7 +147,7 @@ class Postman(object):
                 self.server.close()
             except Exception as e:
                 LOGGER.fatal("Unable to close connection "
-                             "to SMTP server. Error: {}".format(e))
+                        "to SMTP server. Error: {}".format(e))
 
 
 class Porter(object):
