@@ -9,7 +9,8 @@ from yaml.scanner import ScannerError
 from couchdb.design import ViewDefinition
 from logging import getLogger
 from reports.config import Config
-from reports.design import bids_owner_date, tenders_owner_date, jsonpatch
+from reports.design import bids_owner_date, tenders_owner_date, jsonpatch,\
+    tenders_lib, bids_lib
 from reports.helpers import prepare_report_interval, prepare_result_file_name,\
     value_currency_normalize
 
@@ -65,7 +66,9 @@ class BaseUtility(object):
         _id = '_design/report'
         original = self.adb.get(_id)
         original['views']['lib'] = {
-            'jsonpatch': jsonpatch
+            'jsonpatch': jsonpatch,
+            'tenders': tenders_lib,
+            'bids': bids_lib
         }
         self.adb.save(original)
 
