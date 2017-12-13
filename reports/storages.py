@@ -209,23 +209,17 @@ if SWIFT:
                     key
                     )
             url = generate_temp_url(
-                    full_path,
-                    self.config.expires,
-                    self.temporary_url_key,
-                    'GET'
-                    )
-            if self.config.swift_url_prefix:
-                return url.split(self.config.bucket)[1]
-            return url
-
-        def generate_url_for_file(self, key):
-            tail = self.generate_presigned_url(key)
+                        full_path,
+                        self.config.expires,
+                        self.temporary_url_key,
+                        'GET'
+                    ).split(self.config.bucket)[1]
             if not self.config.swift_url_prefix.endswith('/'):
-                if tail.startswith('/'):
-                    return "{}{}".format(self.config.swift_url_prefix, tail)
+                if url.startswith('/'):
+                    return "{}{}".format(self.config.swift_url_prefix, url)
                 else:
-                    return "{}/{}".format(self.config.swift_url_prefix, tail)
-            return self.config.swift_url_prefix[:-1] + tail
+                    return "{}/{}".format(self.config.swift_url_prefix, url)
+            return self.config.swift_url_prefix[:-1] + url
 
         def upload_file(self, file, timestamp):
             with open(file, 'r') as upload_stream:
@@ -272,7 +266,7 @@ if SWIFT:
                                 result.get('traceback'))
                                 )
                     if all((res['success'] for res in results)):
-                        return self.generate_url_for_file(key)
+                        return self.generate_presigned_url(key)
                     else:
                         return ""
 
