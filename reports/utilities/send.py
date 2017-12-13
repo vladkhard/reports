@@ -90,7 +90,7 @@ class Postman(object):
             type=context['type'],
             period=context['period']
             ))
-        msg['From'] = self.config.get('email', 'verified_email')
+        msg['From'] = self.config.get('email', {}).get('verified_email')
         msg['To'] = COMMASPACE.join(recipients)
         return (recipients, msg)
 
