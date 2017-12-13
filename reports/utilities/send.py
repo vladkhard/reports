@@ -78,7 +78,24 @@ class Postman(object):
         self.brokers = []
         self.emails_to = self.config.get('brokers_emails')
         self.vault = Vault(self.config)
-        try:
+
+     def render_email(self, context):
+        return ENV.get_template(TEMPLATE).render(context)
+
+    def construct_mime_message(self, context):
+        recipients = self.emails_to[context['broker']]
+        msg = MIMEText(self.render_email(context), 'html', 'utf-8')
+        msg['Subject'] = SUBJECT.format(**dict(
+            broker=context['broker'],
+            type=context['type'],
+            period=context['period']
+            ))
+        msg['From'] = self.config.get('email', 'verified_email')
+        msg['To'] = COMMASPACE.join(recipients)
+        return (recipients, msg)
+
+    def send_emails(self, msgs):
+       try:
             self.server = smtplib.SMTP(
                 self.config.get('email', {}).get('smtp_server'),
                 self.config.get('email', {}).get('smtp_port')
@@ -87,8 +104,9 @@ class Postman(object):
                 self.config.get('email', {}).get('password_prefix')
             )
             self.server.ehlo()
-            self.server.starttls()
-            self.server.ehlo()
+            if self.config.get('use_tls', True):
+                self.server.starttls()
+                self.server.ehlo()
             if self.config.get('email', {}).get('use_auth'):
                 self.server.login(
                     user_pass.get(
@@ -109,22 +127,7 @@ class Postman(object):
                 "Generation will ran without notifications".format(e))
             self.server = None
 
-    def render_email(self, context):
-        return ENV.get_template(TEMPLATE).render(context)
 
-    def construct_mime_message(self, context):
-        recipients = self.emails_to[context['broker']]
-        msg = MIMEText(self.render_email(context), 'html', 'utf-8')
-        msg['Subject'] = SUBJECT.format(**dict(
-            broker=context['broker'],
-            type=context['type'],
-            period=context['period']
-            ))
-        msg['From'] = self.config.get('email', 'verified_email')
-        msg['To'] = COMMASPACE.join(recipients)
-        return (recipients, msg)
-
-    def send_emails(self, msgs):
         try:
             for context in msgs:
                 recipients, msg = self.construct_mime_message(context)
@@ -137,6 +140,7 @@ class Postman(object):
                             recipients,
                             msg.as_string()
                             )
+                        LOGGER.info('Sent mail to {}'.format(recipients))
         except smtplib.SMTPException as e:
             LOGGER.fatal("Falied to send mails. Error: {}".format(e))
         finally:
