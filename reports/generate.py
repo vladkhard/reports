@@ -234,14 +234,17 @@ def run():
         )
     LOGGER.warning("Archive content: {}".format(INCLUDE))
     LOGGER.warning("Timestamp: {}".format(TIMESTAMP))
+    results = []
     for broker in brokers:
         generate_for_broker(broker, period)
         zip_file_path = zip_for_broker(broker, period)
-        sent = upload_and_notify([zip_file_path])
+        results.append(upload_and_notify([zip_file_path]))
     create_all_bids_csv(brokers, period)
 
-    results = upload_and_notify([
-        zip_all_tenders(brokers, period),
-        zip_all_bids(brokers, period)
-        ])
-    clean_up(brokers, period)
+    if not ARGS.brokers or (ARGS.brokers and ('all' in ARGS.brokers)):
+        results.extend(upload_and_notify([
+            zip_all_tenders(brokers, period),
+            zip_all_bids(brokers, period)
+            ]))
+    if all(results):
+        clean_up(brokers, period)
