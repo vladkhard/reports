@@ -577,37 +577,36 @@ describe("tenders view tests", () => {
             assert.strictEqual(tender.awards[0].date, tenders.find_date_from_revisions(tender));
         });
 
-        it("valid awards and revisions changed awards dates, but new date is later then actual - should return actual date.", () => {
+        it("valid awards and revisions changed awards status to 'cancelled' - should return actual date.", () => {
             tender.revisions.push({
                 date: "2017-11-10T00:00:00Z",
                 changes: [{
-                    path: "/awards/0/date",
+                    path: "/awards/0",
                     op: "replace",
-                    value: "2017-11-10T00:00:00Z"
+                    value: {
+                        status: "cancelled",
+                        date: "2017-11-09T00:00:00Z"
+                    }
                 }]
             });
 
             assert.strictEqual(tender.awards[0].date, tenders.find_date_from_revisions(tender));
         });
 
-        it("valid awards and revisions changed awards dates, and new date is earlier then actual - should return new date.", () => {
-            tender.revisions[2].changes[0].value = "2017-11-08T00:00:00Z";
-            assert.strictEqual(tender.revisions[2].changes[0].value, tenders.find_date_from_revisions(tender, lot));
-        });
-
-        it("valid awards and revisions changed awards dates, but 'lotID' doesn't match lot id - should return actual date.", () => {
-            tender.revisions[2].changes.push({
-                path: "/awards/0/lotID",
-                op: "replace",
-                value: "not_lot_id"
+        it("valid awards and revisions changed awards status to 'cancelled' - should return actual date.", () => {
+            tender.revisions.push({
+                date: "2017-11-10T00:00:00Z",
+                changes: [{
+                    path: "/awards/0",
+                    op: "replace",
+                    value: {
+                        status: "unsuccessful",
+                        date: "2017-11-09T00:00:00Z"
+                    }
+                }]
             });
 
-            assert.strictEqual(tender.awards[0].date, tenders.find_date_from_revisions(tender, lot));
-        });
-
-        it("valid awards and revisions changed awards dates, 'lotID' matches lot id and new date is earlier then actual - should return new date.", () => {
-            tender.revisions[2].changes[1].value = "lot_id";
-            assert.strictEqual(tender.revisions[2].changes[0].value, tenders.find_date_from_revisions(tender, lot));
+            assert.strictEqual(tender.awards[0].date, tenders.find_date_from_revisions(tender));
         });
     });
 
