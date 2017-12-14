@@ -13,7 +13,7 @@ user:
   password: {{ user_password }}
 
 vault:
-  address: {{ vault_address }} 
+  address: http://{{ vault_address }}
   token: {{ vault_token }} 
 
 payments:
@@ -58,7 +58,7 @@ version: 1
 disable_existing_loggers: false
 formatters:
   simpleFormater:
-    format: "[%(levelname)s] %(name)-8s -- %(message)s"
+    format: "[%(asctime)s] - [%(levelname)s] %(name)-8s -- %(message)s"
 
 loggers:
   "":
