@@ -7,6 +7,7 @@ import json
 import re
 import datetime
 from yaml import load
+from repoze.lru import lru_cache
 from dateutil.parser import parse
 
 from logging import getLogger
@@ -68,9 +69,8 @@ def thresholds_headers(cthresholds):
     return result
 
 
-def value_currency_normalize(value, currency, date):
-    if not isinstance(value, (float, int)):
-        raise ValueError
+@lru_cache(1000)
+def get_rate(currency, date):
     base_url = 'http://bank.gov.ua/NBUStatService'\
         '/v1/statdirectory/exchange?date={}&json'.format(
             iso8601.parse_date(date).strftime('%Y%m%d')
@@ -79,7 +79,13 @@ def value_currency_normalize(value, currency, date):
     doc = json.loads(resp)
     if currency == u'RUR':
         currency = u'RUB'
-    rate = filter(lambda x: x[u'cc'] == currency, doc)[0][u'rate']
+    return filter(lambda x: x[u'cc'] == currency, doc)[0][u'rate']
+
+
+def value_currency_normalize(value, currency, date):
+    if not isinstance(value, (float, int)):
+        raise ValueError
+    rate = get_rate(currency, date)
     return value * rate, rate
 
 
