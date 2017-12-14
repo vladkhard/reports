@@ -3,7 +3,7 @@ import os.path
 import argparse
 import sys
 from datetime import datetime
-from logging.config import dictConfig 
+from logging.config import dictConfig
 
 import smtplib
 from email.mime.text import MIMEText
@@ -182,7 +182,6 @@ class Porter(object):
         for file in files:
             entry = create_email_context_from_filename(os.path.basename(file))
             entry['link'] = self.storage.upload_file(file, self.timestamp)
-            LOGGER.info("URL for {} {}".format(entry['broker'], entry['link']))
             entries.append(entry)
         return entries
 

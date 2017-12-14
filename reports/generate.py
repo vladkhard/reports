@@ -34,8 +34,10 @@ parser.add_argument('--include', action='store', default=DEFAULT_INCLUDE)
 parser.add_argument('--notify-brokers', action="append")
 parser.add_argument('--timezone', default='Europe/Kiev')
 ARGS = parser.parse_args()
+
 with open(ARGS.config) as _in:
     CONFIG = load(_in)
+
 dictConfig(CONFIG)
 WORKDIR = CONFIG['out']['out_dir']
 INCLUDE = [op.strip() for op in ARGS.include.split(",")]
@@ -48,7 +50,7 @@ VAULT = Vault(CONFIG)
 
 def upload_and_notify(files):
     ctx = PORTER.upload_files(files)
-    if ARGS.notify:
+    if ARGS.notify and (ARGS.notify in YES):
         PORTER.postman.send_emails(ctx)
     return ctx
 
