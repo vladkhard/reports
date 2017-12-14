@@ -16,6 +16,7 @@ class RefundsUtility(BaseUtility):
     def __init__(
             self, broker, period, config,
             timezone="Europe/Kiev",
+            kind=None
             ):
         super(RefundsUtility, self).__init__(
             broker, period, config, operation="refunds", timezone=timezone)
@@ -23,6 +24,10 @@ class RefundsUtility(BaseUtility):
         self.counter = [0 for _ in range(0, 5)]
         self.counter_before = [0 for _ in range(0, 5)]
         self.new_counter = [0 for _ in range(0, 5)]
+        if kind is None:
+            self.kinds = ['general', 'special', 'defense', 'other', '_kind']
+        else:
+            self.kinds = kind
 
     def row(self, record):
         tender = record.get('tender', '')
@@ -38,8 +43,8 @@ class RefundsUtility(BaseUtility):
 
         value, rate = self.convert_value(record)
 
-        before = 2016 if initial_date < self.threshold_date  else 2017
-        payment = self.get_payment(value, before)
+        before = initial_date < self.threshold_date
+        payment = self.get_payment(value, 2016 if before else 2017)
         if before:
             p = self.config.payments(2016)
             c = self.counter_before
@@ -92,8 +97,6 @@ def run():
     utility = RefundsUtility(
         args.broker, args.period,
         config, timezone=args.timezone)
-
-    utility.kinds = args.kind
     utility.run()
 
 
