@@ -296,6 +296,7 @@ def create_email_context_from_filename(file_name):
         'period': period
     }
 
+
 def read_config(path):
     with open(path) as _in:
         return load(_in)

@@ -108,7 +108,9 @@ def get_password_for_broker(broker):
             )
     try:
         password = VAULT.get(key, {}).get(broker)
-        assert password
+        if not password:
+            LOGGER.info("No password for broker {}".format(broker))
+            sys.exit(2)
         LOGGER.info("Got password for broker {}".format(broker))
         # import pdb;pdb.set_trace()
         return str(password)
