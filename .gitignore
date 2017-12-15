@@ -66,3 +66,5 @@ target/
 
 # pyenv
 .python-version
+# Except lib for views
+!reports/design/lib

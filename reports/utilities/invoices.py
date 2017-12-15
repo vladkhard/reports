@@ -23,11 +23,7 @@ class InvoicesUtility(BaseBidsUtility):
         }
 
     def row(self, record):
-        startdate = record.get('startdate', '')
-        version = 1 if startdate < NEW_ALG_DATE else 2 #TODO: unused
-        date_terminated = record.get('date_terminated', '') #TODO: unused
         value, rate = self.convert_value(record)
-        bid = record.get(u"bid", '') # TODO: unused
         state = record.get('state', '')
 
         payment = self.get_payment(value)
@@ -46,8 +42,8 @@ class InvoicesUtility(BaseBidsUtility):
         for row in [
             ['after_2017-01-01'],
             self.counters[0],
-            self.config.payments(grid=2016),
-            [c * v for c, v in zip(self.counters[0], self.config.payments(grid=2016))],
+            self.config.payments(grid=2017),
+            [c * v for c, v in zip(self.counters[0], self.config.payments(grid=2017))],
             ['after_{}'.format(NEW_ALG_DATE)],
             self.counters[1],
             self.counters[2],
