@@ -31,9 +31,6 @@ class RefundsUtility(BaseUtility):
 
     def row(self, record):
         tender = record.get('tender', '')
-        lot = record.get('lot', '')  # TODO: unused
-        status = record.get('status', '')  # TODO:
-        lot_status = record.get('lot_status', '')  # TODO:
         initial_date = record.get('startdate', '')
         version = 2 if initial_date > NEW_ALG_DATE else 1
 

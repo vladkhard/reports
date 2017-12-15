@@ -31,11 +31,8 @@ class TendersUtility(BaseUtility):
         super(TendersUtility, self).__init__(
             broker, period, config, operation="tenders", timezone=timezone)
 
-        # TODO:
-        # [self.headers.remove(col) for col in self.skip_cols if col in self.headers]
 
     def row(self, record):
-        rate = None
         tender = record.get('tender', '')
         date = record.get('startdate', '')
         if date < self.threshold_date:
