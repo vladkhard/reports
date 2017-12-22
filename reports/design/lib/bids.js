@@ -462,11 +462,11 @@ function emit_results(tender, results) {
 
 function main(doc) {
     if (doc.doc_type !== "Tender") {
-        return;
+        return [];
     }
     
     if ((doc.mode || "") === "test") {
-        return;
+        return [];
     }
 
     startDate = (doc.enquiryPeriod||{}).startDate;
@@ -478,15 +478,15 @@ function main(doc) {
 
     bids_disclojure_date = (doc.qualificationPeriod || {}).startDate || (doc.awardPeriod || {}).startDate || null;
     if(!bids_disclojure_date) {
-        return;
+        return [];
     }
     // payments should be calculated only from first stage of CD and only once
     if ((doc.procurementMethod !== "open") && (['competitiveDialogueEU', 'competitiveDialogueUA'].indexOf(doc.procurementMethodType) === -1)) {
-        return;
+        return [];
     }
 
     if ((['selective', 'open'].indexOf(doc.procurementMethod) === -1) && (['competitiveDialogueEU', 'competitiveDialogueUA'].indexOf(doc.procurementMethodType) !== -1)) {
-        return;
+        return [];
     }
 
     id = doc._id;

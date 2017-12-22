@@ -506,7 +506,7 @@ function main(doc) {
     // only first stage is completed
     if (['competitiveDialogueEU', 'competitiveDialogueUA'].indexOf(doc.procurementMethodType) !== -1) {
         if (['unsuccessful', 'cancelled'].indexOf(doc.status) === -1) {
-            return;
+            return [];
         }
     }
 
@@ -514,16 +514,20 @@ function main(doc) {
     if (doc.procurementMethod !== "open") {
         if (doc.procurementMethodType.indexOf('stage2') !== -1) {
             if (doc.procurementMethod !== 'selective') {
-                return;
+                return [];
             } 
         } else {
-            return;
+            return [];
         }
     }
-    if ((doc.mode || "") === "test") { return;}
+    if ((doc.mode || "") === "test") {
+        return [];
+    }
 
     bids_disclojure_date = (doc.qualificationPeriod || {}).startDate || (doc.awardPeriod || {}).startDate || null;
-    if (!bids_disclojure_date) {return;}
+    if (!bids_disclojure_date) {
+        return [];
+    }
 
     //global tender values
     kind = doc.procuringEntity.kind || "_kind";
