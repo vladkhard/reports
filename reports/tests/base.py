@@ -9,7 +9,7 @@ from reports.tests.utils import(
     get_mock_parser,
     test_data
 )
-from reports.helpers import get_arguments_parser
+from reports.helpers import get_arguments_parser, read_config
 
 
 class BaseUtilityTest(unittest.TestCase):
@@ -56,8 +56,7 @@ class BaseBidsUtilityTest(BaseUtilityTest):
         mock_parse = get_mock_parser()
         with mock.patch('argparse.ArgumentParser.parse_args', mock_parse):
             args = get_arguments_parser().parse_args()
-            with open(args.config) as file:
-                config = yaml.load(file)
+            config = read_config(args.config)
             self.utility = bids.BidsUtility(args.broker, args.period, config)
 
 
@@ -70,8 +69,7 @@ class BaseTenderUtilityTest(BaseUtilityTest):
             return_value=['general'])
         with mock.patch('argparse.ArgumentParser.parse_args', mock_parse):
             args = get_arguments_parser().parse_args()
-            with open(args.config) as file:
-                config = yaml.load(file.read())
+            config = read_config(args.config)
             self.utility = tenders.TendersUtility(args.broker, args.period, config)
 
 
@@ -84,8 +82,7 @@ class BaseRefundsUtilityTest(BaseUtilityTest):
             return_value=['general'])
         with mock.patch('argparse.ArgumentParser.parse_args', mock_parse):
             args = get_arguments_parser().parse_args()
-            with open(args.config) as file:
-                config = yaml.load(file.read())
+            config = read_config(args.config)
             self.utility = refunds.RefundsUtility(args.broker, args.period, config, kind=args.kind)
 
 
@@ -96,6 +93,5 @@ class BaseInvoicesUtilityTest(BaseUtilityTest):
         mock_parse = get_mock_parser()
         with mock.patch('argparse.ArgumentParser.parse_args', mock_parse):
             args = get_arguments_parser().parse_args()
-            with open(args.config) as file:
-                config = yaml.load(file.read())
+            config = read_config(args.config)
             self.utility = invoices.InvoicesUtility(args.broker, args.period, config)

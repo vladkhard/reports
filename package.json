@@ -1,10 +1,24 @@
 {
-    "scripts": {
-        "test": "src/node_modules/nyc/bin/nyc.js --exclude \"reports/design/lib/jsonpatch.js\" src/node_modules/mocha/bin/mocha reports/tests/views"
-    },
-    "devDependencies": {
-        "chai": "^4.1.2",
-        "mocha": "^4.0.1",
-        "nyc": "^11.3.0"
-    }
+  "scripts": {
+    "test": "node_modules/nyc/bin/nyc.js --exclude \"reports/design/lib/jsonpatch.js\" node_modules/mocha/bin/mocha reports/tests/views"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^4.0.1",
+    "nyc": "^11.3.0"
+  },
+  "name": "reports",
+  "description": "Documentation =============",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openprocurement/reports.git"
+  },
+  "author": "vladkhard",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/openprocurement/reports/issues"
+  },
+  "homepage": "https://github.com/openprocurement/reports#readme"
 }

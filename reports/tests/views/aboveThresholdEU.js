@@ -2,7 +2,7 @@
 
 let tenders = require("../../design/lib/tenders");
 let bids = require("../../design/lib/bids");
-let assert = require("../../../src/node_modules/chai").assert;
+let assert = require("../../../node_modules/chai").assert;
 
 let tender = {
     procurementMethodType: "aboveThresholdEU"

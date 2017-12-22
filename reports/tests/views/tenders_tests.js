@@ -1,7 +1,7 @@
 "use strict";
 
 let tenders = require("../../design/lib/tenders");
-let assert = require("../../../src/node_modules/chai").assert;
+let assert = require("../../../node_modules/chai").assert;
 
 describe("tenders view tests", () => {
     describe("find_first_revision_date", () => {

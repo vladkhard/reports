@@ -62,7 +62,7 @@ class ReportInvoicesUtilityTestCase(BaseInvoicesUtilityTest):
             return '{}\r\n'.format(','.join(self.utility.headers)) +\
                 'after_2017-01-01\r\n' +\
                 '{}\r\n'.format(','.join((str(i) for i in self.utility.counters[0]))) +\
-                '{}\r\n'.format(','.join((str(i) for i in self.utility.config.payments(grid=2016)))) +\
+                '{}\r\n'.format(','.join((str(i) for i in self.utility.config.payments(grid=2017)))) +\
                 '{}\r\n'.format(','.join(
                     (str(c * v) for c, v in zip(self.utility.counters[0], self.utility.config.payments())))) +\
                 'after_2017-08-16\r\n' +\
