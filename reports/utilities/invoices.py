@@ -31,8 +31,8 @@ class InvoicesUtility(BaseBidsUtility):
         c = self.counters[state] if state else self.counters[0]
         for i, x in enumerate(p):
             if payment == x:
-                msg = 'Computated bill {} for value {} '\
-                      'in {} tender'.format(payment, value, record['tender'])
+                msg = 'Invoices: bill {} for tender {} '\
+                      'with value {}'.format(payment, record['tender'], value)
                 self.Logger.info(msg)
                 c[i] += 1
 

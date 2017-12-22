@@ -52,8 +52,8 @@ class RefundsUtility(BaseUtility):
             c = self.new_counter
         for i, x in enumerate(p):
             if payment == x:
-                msg = 'Computated bill {} for value {} '\
-                      'in {} tender'.format(payment, value, record['tender'])
+                msg = 'Refunds: refund {} for tender {} '\
+                      'with value {}'.format(payment, record['tender'], value)
                 self.Logger.info(msg)
                 c[i] += 1
 

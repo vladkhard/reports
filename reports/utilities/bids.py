@@ -26,12 +26,13 @@ class BidsUtility(BaseBidsUtility):
         value, rate = self.convert_value(record)
         r = str(rate) if rate else ''
         row.append(r)
-        row.append(self.get_payment(value))
+        payment = self.get_payment(value)
+        row.append(payment)
         if state:
             row.append(state)
         self.Logger.info(
-            "Bill {} for tender {} with value {}".format(
-                row[-1], row[0], value
+            "Bids: bill {} for tender {} with value {}".format(
+                payment, row[0], value
             )
         )
         return row, version
