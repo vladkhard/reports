@@ -1,7 +1,7 @@
 "use strict";
 
 let bids = require("../../design/lib/bids");
-let assert = require("../../../src/node_modules/chai").assert;
+let assert = require("../../../node_modules/chai").assert;
 
 describe("bids view tests", () => {
     describe("get_eu_tender_bids", () => {
