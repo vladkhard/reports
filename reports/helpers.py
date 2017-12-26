@@ -73,7 +73,7 @@ def thresholds_headers(cthresholds):
 
 
 @lru_cache(10000)
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
+@retry(wait_exponential_multiplier=1000, stop_max_attempt_number=5)
 def get_rate(currency, date):
     base_url = 'http://bank.gov.ua/NBUStatService'\
         '/v1/statdirectory/exchange?date={}&json'.format(

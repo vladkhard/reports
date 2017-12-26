@@ -96,7 +96,7 @@ class Postman(object):
         msg['To'] = COMMASPACE.join(recipients)
         return (recipients, msg)
 
-    @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
+    @retry(wait_exponential_multiplier=1000, stop_max_attempt_number=5)
     def send_emails(self, msgs):
         try:
             self.server = smtplib.SMTP(
