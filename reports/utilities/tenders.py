@@ -48,11 +48,12 @@ class TendersUtility(BaseUtility):
         value, rate = self.convert_value(record)
         r = str(rate) if rate else ''
         row.append(r)
-        grid = 2017 if record.get('startdate', '') < self.threshold_date else 2016
-        row.append(self.get_payment(value, grid))
+        grid = 2016 if record.get('startdate', '') < self.threshold_date else 2017
+        payment = self.get_payment(value, grid)
+        row.append(payment)
         self.Logger.info(
-            "Refund {} for tender {} with value {}".format(
-                row[-1], row[0], value
+            "Tenders: refund {} for tender {} with value {}".format(
+                payment, row[0], value
             )
         )
         return row, version

@@ -11,6 +11,8 @@ from repoze.lru import lru_cache
 from dateutil.parser import parse
 from time import sleep
 
+from retrying import retry
+
 from logging import getLogger
 
 
@@ -71,6 +73,7 @@ def thresholds_headers(cthresholds):
 
 
 @lru_cache(10000)
+@retry(wait_exponential_multiplier=1000, stop_max_attempt_number=5)
 def get_rate(currency, date):
     base_url = 'http://bank.gov.ua/NBUStatService'\
         '/v1/statdirectory/exchange?date={}&json'.format(

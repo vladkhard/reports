@@ -1,6 +1,7 @@
 import os.path
 import shutil
 from tempfile import NamedTemporaryFile
+from retrying import retry
 
 import boto3
 from botocore.exceptions import ClientError
@@ -74,6 +75,7 @@ class MemoryStorage(BaseStorate):
     def generate_presigned_url(self, key):
         return "file://{}".format(self.storage[key])
 
+    @retry(wait_exponential_multiplier=1000, stop_max_attempt_number=5)
     def upload_file(self, file, timestamp):
         key = '/'.join((timestamp, os.path.basename(file)))
         with NamedTemporaryFile(mode='w+') as tmp_file:
@@ -118,6 +120,7 @@ class S3Storage(BaseStorate):
                     ExpiresIn=self.config.expires,
                     )
 
+    @retry(wait_exponential_multiplier=1000, stop_max_attempt_number=5)
     def upload_file(self, file, timestamp):
         # timestamp aka full path prefix
         # accepts only full system path to the file
@@ -221,6 +224,7 @@ if SWIFT:
                     return "{}/{}".format(self.config.swift_url_prefix, url)
             return self.config.swift_url_prefix[:-1] + url
 
+        @retry(wait_exponential_multiplier=1000, stop_max_attempt_number=5)
         def upload_file(self, file, timestamp):
             with open(file, 'r') as upload_stream:
                 try:

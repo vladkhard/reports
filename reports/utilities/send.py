@@ -12,6 +12,8 @@ from email.utils import COMMASPACE
 from jinja2 import Environment, PackageLoader
 
 from logging import getLogger
+from retrying import retry
+
 from reports.storages import REGISTRY
 from reports.vault import Vault
 from reports.helpers import create_email_context_from_filename, read_config
@@ -94,6 +96,7 @@ class Postman(object):
         msg['To'] = COMMASPACE.join(recipients)
         return (recipients, msg)
 
+    @retry(wait_exponential_multiplier=1000, stop_max_attempt_number=5)
     def send_emails(self, msgs):
         try:
             self.server = smtplib.SMTP(
