@@ -4,6 +4,7 @@ import csv
 import os
 import yaml
 import requests
+from retrying import retry
 from requests.exceptions import RequestException
 from yaml.scanner import ScannerError
 from couchdb.design import ViewDefinition
@@ -37,6 +38,7 @@ class BaseUtility(object):
         self.connect_db()
         self.Logger = getLogger("BILLING")
 
+    @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
     def connect_db(self):
         self.db = couchdb.Database(
             self.config.db_url,
@@ -61,6 +63,7 @@ class BaseUtility(object):
                 return p[index]
         return p[-1]
 
+    @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
     def _sync_views(self):
         ViewDefinition.sync_many(self.adb, VIEWS)
         _id = '_design/report'
@@ -89,6 +92,7 @@ class BaseUtility(object):
         return value, "-"
 
     @property
+    @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
     def response(self):
         self._sync_views()
         if not self.view:

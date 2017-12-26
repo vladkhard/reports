@@ -22,6 +22,7 @@ REQUIRES = [
     'ExtendedJournalHandler==1.0.0',
     'repoze.lru',
     'hvac',
+    'retrying'
 ]
 EXTRA = REQUIRES + ['python-swiftclient', 'python-keystoneclient']
 TEST_REQUIRES = REQUIRES + [
