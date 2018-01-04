@@ -1,7 +1,7 @@
 from setuptools import setup
 
 NAME = 'reports'
-VERSION = '1.0.3'
+VERSION = '1.0.4'
 AUTHOR = 'Quintagroup, Ltd.'
 LICENSE = 'Apache License 2.0'
 REQUIRES = [
@@ -9,7 +9,6 @@ REQUIRES = [
     'pbkdf2',
     'requests',
     'gevent',
-    'requests_cache',
     'pytz',
     'iso8601',
     'pyminizip',
