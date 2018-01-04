@@ -1,12 +1,11 @@
 from setuptools import setup
 
 NAME = 'reports'
-VERSION = '1.0.1'
+VERSION = '1.0.3'
 AUTHOR = 'Quintagroup, Ltd.'
 LICENSE = 'Apache License 2.0'
 REQUIRES = [
     'couchdb',
-    'dateparser',
     'pbkdf2',
     'requests',
     'gevent',
