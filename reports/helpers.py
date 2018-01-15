@@ -74,12 +74,12 @@ def thresholds_headers(cthresholds):
 
 @lru_cache(10000)
 @retry(wait_exponential_multiplier=1000, stop_max_attempt_number=5)
-def get_rate(currency, date):
+def get_rate(currency, date, proxy_address):
     base_url = 'http://bank.gov.ua/NBUStatService'\
         '/v1/statdirectory/exchange?date={}&json'.format(
             iso8601.parse_date(date).strftime('%Y%m%d')
         )
-    resp = requests.get(base_url).text.encode('utf-8')
+    resp = requests.get(base_url, proxies={"http": proxy_address}).text.encode('utf-8')
     doc = json.loads(resp)
     if currency == u'RUR':
         currency = u'RUB'
@@ -88,10 +88,10 @@ def get_rate(currency, date):
     return rate
 
 
-def value_currency_normalize(value, currency, date):
+def value_currency_normalize(value, currency, date, proxy_address):
     if not isinstance(value, (float, int)):
         raise ValueError
-    rate = get_rate(currency, date)
+    rate = get_rate(currency, date, proxy_address)
     return value * rate, rate
 
 

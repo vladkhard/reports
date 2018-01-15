@@ -38,6 +38,7 @@ class Config(object):
             self.get_option('admin', 'username'),
             self.get_option('admin', 'password'),
             db_name)
+        self.proxy_address = self.config.get("proxy_address")
 
     def get_option(self, section, name):
         try:
