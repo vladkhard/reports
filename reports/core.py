@@ -80,7 +80,7 @@ class BaseUtility(object):
         if curr != u'UAH':
             old = float(value)
             value, rate = value_currency_normalize(
-                old, row[u'currency'], row[u'startdate']
+                old, row[u'currency'], row[u'startdate'], self.config.proxy_address
             )
             msg = "Changed value {} {} by exgange rate {} on {}"\
                 " is  {} UAH in {}".format(

@@ -20,6 +20,8 @@ payments:
   thresholds: [20000, 50000, 200000, 1000000]
   grids: [2016,2017]
 
+proxy_address: {{ proxy_address }}
+
 storage:
   type: {{storage_type}} 
 
