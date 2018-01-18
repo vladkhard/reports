@@ -112,9 +112,8 @@ def get_password_for_broker(broker):
         password = VAULT.get(key, {}).get(broker)
         if not password:
             LOGGER.info("No password for broker {}".format(broker))
-            sys.exit(2)
+            password = ""
         LOGGER.info("Got password for broker {}".format(broker))
-        # import pdb;pdb.set_trace()
         return str(password)
     except Exception as e:
         LOGGER.fatal(
@@ -137,19 +136,22 @@ def zip_for_broker(
         broker, start, end, "-".join(include)
     )
     try:
-        return compress(
-            files,
-            CONFIG['out']['out_dir'],
-            result_zip_name,
-            get_password_for_broker(broker)
-        )
+        password = get_password_for_broker(broker) 
+        if password:
+            return compress(
+                files,
+                CONFIG['out']['out_dir'],
+                result_zip_name,
+                password 
+            )
+        return False
     except (OSError, IOError) as e:
         LOGGER.fatal(
                 "Falied to create archive {} for broker {}. Error: {}".format(
                     result_zip_name, broker, e
                     )
                 )
-        return None
+        return False
 
 
 def zip_all_tenders(brokers, period):
@@ -168,7 +170,7 @@ def zip_all_tenders(brokers, period):
         )
     except (OSError, IOError) as e:
         LOGGER.fatal("Error: {}".format(e))
-        return None
+        return False
 
 
 def zip_all_bids(brokers, period):
@@ -181,19 +183,22 @@ def zip_all_bids(brokers, period):
     ])
     try:
         name = "all@{}--{}-bids.zip".format(start, end)
-        return compress(
-            files,
-            CONFIG['out']['out_dir'],
-            name,
-            get_password_for_broker('all')
-        )
+        password = get_password_for_broker('all')
+        if password:
+            return compress(
+                files,
+                CONFIG['out']['out_dir'],
+                name,
+                password 
+            )
+        return False
     except (OSError, IOError) as e:
         LOGGER.fatal(
             "Falied to create archive {} for broker {}. Error: {}".format(
                 name, broker, e
                 )
             )
-        return None
+        return False
 
 
 def clean_up(brokers, period):
@@ -242,13 +247,16 @@ def run():
     for broker in brokers:
         generate_for_broker(broker, period)
         zip_file_path = zip_for_broker(broker, period)
-        results.append(upload_and_notify([zip_file_path]))
+        if zip_file_path:
+            results.append(upload_and_notify([zip_file_path]))
     create_all_bids_csv(brokers, period)
 
     if not ARGS.brokers or (ARGS.brokers and ('all' in ARGS.brokers)):
+        all_tenders = zip_all_tenders(brokers, period)
+        all_bids = zip_all_bids(brokers, period)
         results.extend(upload_and_notify([
-            zip_all_tenders(brokers, period),
-            zip_all_bids(brokers, period)
+            _file for _file in (all_bids, all_tenders) 
+            if _file 
             ]))
     if all(results):
         clean_up(brokers, period)
