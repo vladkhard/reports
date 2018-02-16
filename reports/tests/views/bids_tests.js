@@ -38,7 +38,7 @@ describe("bids view tests", () => {
         const antipattern = "/smth_else";
         const date = "2017-11-10T00:00:00Z";
         let revisions;
-        
+
         it("there are no paths matching pattern - should return empty array.", () => {
             revisions = [
                 {
@@ -73,11 +73,11 @@ describe("bids view tests", () => {
                     date: "2017-11-13T00:00:00Z",
                     changes: [{
                         path: "/something",
-                        op: "remove" 
+                        op: "remove"
                     }]
                 }
             ];
-            
+
             assert.strictEqual(bids.find_initial_bid_date(revisions), "");
         });
 
@@ -120,7 +120,7 @@ describe("bids view tests", () => {
                     status: "invalid.pre-qualification",
                 }
             ];
-    
+
             let expected_bids = [
                 {
                     date: "2017-11-13T00:00:00Z",
@@ -131,14 +131,14 @@ describe("bids view tests", () => {
                     status: "invalid.pre-qualification",
                 }
             ];
-            
+
             assert.deepEqual(expected_bids, bids.filter_bids(input_bids));
         });
     });
 
     describe("find_first_revision_date", () => {
         let tender;
-        
+
         it("tender has no revisions - should return empty string.", () => {
             tender = {};
             assert.strictEqual(bids.find_first_revision_date(tender), "");
@@ -163,7 +163,7 @@ describe("bids view tests", () => {
 
     describe("count_lot_bids", () => {
         let lot, tender;
-        
+
         it("tender bids is empty array - should return 0 (length of empty array).", () => {
             lot = {
                 id: "lot_id"
@@ -171,7 +171,7 @@ describe("bids view tests", () => {
             tender = {
                 bids : []
             };
-            
+
             assert.strictEqual(bids.count_lot_bids(lot, tender), 0);
         });
 
@@ -212,7 +212,7 @@ describe("bids view tests", () => {
                 status: "cancelled",
                 id: "lot_id"
             };
-    
+
             qualifications.push(
                 {
                     status: "active",
@@ -277,7 +277,7 @@ describe("bids view tests", () => {
         it("lot status is undefined - should return true.", () => {
             lot = {
             };
-    
+
             assert.isTrue(bids.check_lot(undefined, lot));
         });
 
@@ -387,7 +387,7 @@ describe("bids view tests", () => {
                     dateModified: "2017-11-15T00:00:00Z"
                 }
             );
-            
+
             assert.deepEqual(tender.lots[1], bids.find_lot_for_bid(tender, lotValue));
         });
     });
@@ -469,7 +469,7 @@ describe("bids view tests", () => {
             tender.awards[0].lotID = lot.id;
             assert.isFalse(bids.check_award_for_bid_multilot(tender, bid, lot));
         });
-        
+
         it("tender has valid awards and awards in status active or pending - should return true.", () => {
             tender.awards[0].status = "active";
             assert.isTrue(bids.check_award_for_bid_multilot(tender, bid, lot));
@@ -532,7 +532,7 @@ describe("bids view tests", () => {
     });
 
     describe("check_qualification_for_EU_bid", () => {
-        let bid, lot, tender;
+        let bid, lot, tender, results;
 
         it("lot is in status unsuccessful - should return true (the results of check_qualification_for_bid and check_award_for_bid_multilot).", () => {
             bid = {
@@ -590,30 +590,169 @@ describe("bids view tests", () => {
             assert.isFalse(bids.check_qualification_for_EU_bid(tender, bid, lot));
         });
 
-        it("tender status is active.pre-qualification, lot status is not unsuccessful and tender has qualifications not in status cancelled - should return true.", () => {
-            lot.status = "";
-            tender.revisions = [];
-            tender.status = "active.pre-qualification";
-            tender.qualifications[0].status = "";
-            assert.isTrue(bids.check_qualification_for_EU_bid(tender, bid, lot));
-        });
-
         it("tender status is active.pre-qualification.stand-still, lot status is not unsuccessful and tender has no qualifications in status active - should return false.", () => {
             lot.status = "";
             tender.status = "active.pre-qualification.stand-still";
             assert.isFalse(bids.check_qualification_for_EU_bid(tender, bid, lot));
         });
 
-        it("tender status is active.pre-qualification.stand-still, lot status is not unsuccessful and tender has qualification in status active - should return true.", () => {
-            lot.status = "";
-            tender.qualifications[0].status = "active";
+
+        it("tender has cancelled lot and prev status was active.pre-qualification, and qualifications was not cancelled - should return true", () => {
+            bid = {
+                id: "bid_id"
+            };
+            lot = {
+                id: "lot_id",
+                status: "cancelled"
+            };
+            tender = {
+                qualifications: [{
+                    bidID: bid.id,
+                    lotID: lot.id,
+                    status: "cancelled"
+                }],
+                status: "active"
+            };
+            tender.lots = [lot];
+            tender.bids = [bid];
+            tender.revisions = [
+                {
+                    date: "2017-11-14T00:00:00Z",
+                        changes: [
+                            {
+                                path: "/something",
+                                op: "remove"
+                            }
+                        ]
+                    },
+                {
+                    date: "2017-11-14T00:00:00Z",
+                    changes: [
+                        {
+                            path: "/lots/0/status",
+                            op: "replace",
+                            value: "active"
+                        },
+                        {
+                            path: "/status",
+                            value: "active.pre-qualification",
+                            op: "replace"
+                        },
+                        {
+                            path: "/qualifications/0/status",
+                            value: "not_cancelled",
+                            op: "replace"
+                        }
+                    ]
+                }
+            ];
             assert.isTrue(bids.check_qualification_for_EU_bid(tender, bid, lot));
         });
 
-        it("tender status is undefined - should return true (the results of check_qualification_for_bid and check_award_for_bid_multilot).", () => {
-            tender.status = "";
+        it("tender has cancelled lot and prev status was active.pre-qualification.stand-still, and qualifications was active - should return true", () => {
+            bid = {
+                id: "bid_id"
+            };
+            lot = {
+                id: "lot_id",
+                status: "cancelled"
+            };
+            tender = {
+                qualifications: [{
+                    bidID: bid.id,
+                    lotID: lot.id,
+                    status: "cancelled"
+                }],
+                status: "active"
+            };
+            tender.lots = [lot];
+            tender.bids = [bid];
+            tender.revisions = [
+                {
+                    date: "2017-11-14T00:00:00Z",
+                        changes: [
+                            {
+                                path: "/something",
+                                op: "remove"
+                            }
+                        ]
+                    },
+                {
+                    date: "2017-11-14T00:00:00Z",
+                    changes: [
+                        {
+                            path: "/lots/0/status",
+                            op: "replace",
+                            value: "active"
+                        },
+                        {
+                            path: "/status",
+                            value: "active.pre-qualification.stand-still",
+                            op: "replace"
+                        },
+                        {
+                            path: "/qualifications/0/status",
+                            value: "active",
+                            op: "replace"
+                        }
+                    ]
+                }
+            ];
             assert.isTrue(bids.check_qualification_for_EU_bid(tender, bid, lot));
         });
+
+        it("tender has cancelled lot and prev status was active.pre-qualification.stand-still, and qualifications wasn't active - should return true", () => {
+            bid = {
+                id: "bid_id"
+            };
+            lot = {
+                id: "lot_id",
+                status: "cancelled"
+            };
+            tender = {
+                qualifications: [{
+                    bidID: bid.id,
+                    lotID: lot.id,
+                    status: "cancelled"
+                }],
+                status: "active"
+            };
+            tender.lots = [lot];
+            tender.bids = [bid];
+            tender.revisions = [
+                {
+                    date: "2017-11-14T00:00:00Z",
+                        changes: [
+                            {
+                                path: "/something",
+                                op: "remove"
+                            }
+                        ]
+                    },
+                {
+                    date: "2017-11-14T00:00:00Z",
+                    changes: [
+                        {
+                            path: "/lots/0/status",
+                            op: "replace",
+                            value: "active"
+                        },
+                        {
+                            path: "/status",
+                            value: "active.pre-qualification.stand-still",
+                            op: "replace"
+                        },
+                        {
+                            path: "/qualifications/0/status",
+                            value: "unsuccessful",
+                            op: "replace"
+                        }
+                    ]
+                }
+            ];
+            assert.isFalse(bids.check_qualification_for_EU_bid(tender, bid, lot));
+        });
+
 
         it("no lot, no revisions, tender status is unsuccessful - should return true (the result of check_qualification_for_bid).", () => {
             lot = undefined;
