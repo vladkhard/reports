@@ -417,6 +417,15 @@ function emit_deleted_lotValues(tender, actual_bids, results) {
     }).map(function (lot) {
             return lot.relatedLot;
         });
+    all_lot_values = [];
+    actual_bids.forEach(function (bid) {
+        (bid.lotValues || []).forEach(function (lotValue) {
+            all_lot_values.push(lotValue.relatedLot);
+        });
+    });
+    cancelled_lots_ids = cancelled_lots_ids.filter(function (id) {
+        return id.indexOf(all_lot_values) !== -1;
+    });
     if (cancelled_lots_ids.length > 0) {
         var revs = tender.revisions.slice().reverse().slice(0, tender.revisions.length - 1);
         var tender_copy = JSON.parse(JSON.stringify(tender));
