@@ -14,7 +14,8 @@ from requests.exceptions import RequestException
 from yaml.scanner import ScannerError
 from dateutil.parser import parse
 from config import Config
-from design import bids_owner_date, tenders_owner_date, jsonpatch
+from reports.design import bids_owner_date, tenders_owner_date, jsonpatch,\
+    tenders_lib, bids_lib
 from couchdb.design import ViewDefinition
 from logging import getLogger
 from reports.helpers import get_cmd_parser, create_db_url, Kind, Status
@@ -99,7 +100,9 @@ class BaseUtility(object):
         _id = '_design/report'
         original = self.adb.get(_id)
         original['views']['lib'] = {
-            'jsonpatch': jsonpatch
+            'jsonpatch': jsonpatch,
+            'tenders': tenders_lib,
+            'bids': bids_lib
         }
         self.adb.save(original)
         ViewDefinition.sync_many(self.adb, views)
