@@ -497,6 +497,8 @@ function find_tender_data (tender, results) {
 function main(doc) {
     if (doc.doc_type !== "Tender") {return;}
 
+    if (doc.procurementMethodType === 'esco') { return []; }
+
     startDate = (doc.enquiryPeriod || {}).startDate;
     //tender checks
     if ( !startDate ) {
