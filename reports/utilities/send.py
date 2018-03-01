@@ -104,7 +104,8 @@ class Postman(object):
                     self.config.get('email', {}).get('smtp_port')
                     )
             user_pass = self.vault.get(
-                    self.config.get('email', {}).get('password_prefix')
+                    self.config.get('email', {}).get('password_prefix'),
+                    {}
                     )
             self.server.ehlo()
             if self.config.get('use_tls', True):
@@ -114,10 +115,10 @@ class Postman(object):
                 self.server.login(
                         user_pass.get(
                             'AWS_ACCESS_KEY_ID',
-                            user_pass.get('user')),
+                            user_pass.get('user', "")),
                         user_pass.get(
                             'AWS_SECRET_ACCESS_KEY',
-                            user_pass.get('password'))
+                            user_pass.get('password', ""))
                         )
         except smtplib.SMTPException as e:
             LOGGER.fatal(

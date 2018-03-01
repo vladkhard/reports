@@ -23,7 +23,9 @@ class Vault(object):
             )
 
     def get(self, key, default=None):
-        data = self.client.read(key).get('data')
-        if data:
-            return data
+        raw = self.client.read(key)
+        if raw:
+            data = raw.get('data')
+            if data:
+                return data
         return default
