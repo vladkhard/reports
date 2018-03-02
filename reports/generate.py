@@ -111,8 +111,8 @@ def get_password_for_broker(broker):
     try:
         password = VAULT.get(key, {}).get(broker)
         if not password:
-            LOGGER.info("No password for broker {}".format(broker))
-            password = ""
+            LOGGER.fatal("No password for broker {}".format(broker))
+            return ""
         LOGGER.info("Got password for broker {}".format(broker))
         return str(password)
     except Exception as e:
@@ -203,7 +203,7 @@ def zip_all_bids(brokers, period):
 
 def clean_up(brokers, period):
     start, end = period
-    files= [
+    files = [
         "{}@{}--{}-{}.csv".format(broker, start, end, op)
         for broker in brokers
         for op in INCLUDE
@@ -255,8 +255,8 @@ def run():
         all_tenders = zip_all_tenders(brokers, period)
         all_bids = zip_all_bids(brokers, period)
         results.extend(upload_and_notify([
-            _file for _file in (all_bids, all_tenders) 
-            if _file 
+            _file for _file in (all_bids, all_tenders)
+            if _file
             ]))
     if all(results):
         clean_up(brokers, period)
