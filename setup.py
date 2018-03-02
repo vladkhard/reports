@@ -1,7 +1,7 @@
 from setuptools import setup
 
 NAME = 'reports'
-VERSION = '1.0.7'
+VERSION = '1.0.8'
 AUTHOR = 'Quintagroup, Ltd.'
 LICENSE = 'Apache License 2.0'
 REQUIRES = [
