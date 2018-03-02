@@ -57,7 +57,7 @@ def upload_and_notify(files):
 
 def send_emails_from_existing_files():
     ctx = PORTER.create_emails_context_from_existing_prefix()
-    if ARGS.notify:
+    if ARGS.notify and (ARGS.notify in YES):
         PORTER.postman.send_emails(ctx)
     return [entry['broker'] for entry in ctx]
 

@@ -82,6 +82,13 @@ class BaseUtility(object):
             value, rate = value_currency_normalize(
                 old, row[u'currency'], row[u'startdate'], self.config.proxy_address
             )
+            if not rate:
+                self.Logger.fatal(
+                        "Unalbe to change value {} for tender {} with currency {}".format(
+                            old, row['tender'], row['currency']
+                            )
+                )
+                return value, ""
             msg = "Changed value {} {} by exgange rate {} on {}"\
                 " is  {} UAH in {}".format(
                     old, row[u'currency'], rate,

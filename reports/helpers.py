@@ -18,7 +18,7 @@ from logging import getLogger
 
 RE = re.compile(r'(^.*)@(\d{4}-\d{2}-\d{2}--\d{4}-\d{2}-\d{2})?-([a-z\-]*)\.zip')
 LOGGER = getLogger("BILLING")
-
+DEFAULT_SCHEME = "https"
 
 def get_arguments_parser():
     parser = argparse.ArgumentParser(
@@ -75,14 +75,32 @@ def thresholds_headers(cthresholds):
 @lru_cache(10000)
 @retry(wait_exponential_multiplier=1000, stop_max_attempt_number=5)
 def get_rate(currency, date, proxy_address=None):
-    base_url = 'http://bank.gov.ua/NBUStatService'\
+    if proxy_address:
+        if 'http' in proxy_address:
+            scheme = "https" if proxy_address.startswith('https') \
+                    else "http"
+        else:
+            scheme = DEFAULT_SCHEME
+    else:
+        scheme = DEFAULT_SCHEME
+    base_url = '{}://bank.gov.ua/NBUStatService'\
         '/v1/statdirectory/exchange?date={}&json'.format(
+            scheme,
             iso8601.parse_date(date).strftime('%Y%m%d')
         )
-    if proxy_address:
-        resp = requests.get(base_url, proxies={'http': proxy_address}).text.encode('utf-8')
-    else:
-        resp = requests.get(base_url).text.encode('utf-8')
+    try:
+        if proxy_address:
+            resp = requests.get(
+                base_url,
+                proxies={scheme: proxy_address}
+                ).text.encode('utf-8')
+        else:
+            resp = requests.get(base_url).text.encode('utf-8')
+    except requests.exceptions.ConnectionError as e:
+        LOGGER.fatal(
+            "Error while getting exchange rate. Error: {}".format(e)
+        )
+        return None
     doc = json.loads(resp)
     if currency == u'RUR':
         currency = u'RUB'
@@ -95,6 +113,8 @@ def value_currency_normalize(value, currency, date, proxy_address=None):
     if not isinstance(value, (float, int)):
         raise ValueError
     rate = get_rate(currency, date, proxy_address)
+    if not rate:
+        return (value, None)
     return value * rate, rate
 
 
