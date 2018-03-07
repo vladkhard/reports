@@ -424,7 +424,7 @@ function emit_deleted_lotValues(tender, actual_bids, results) {
         });
     });
     cancelled_lots_ids = cancelled_lots_ids.filter(function (id) {
-        return id.indexOf(all_lot_values) !== -1;
+        return id.indexOf(all_lot_values) === -1;
     });
     if (cancelled_lots_ids.length > 0) {
         var revs = tender.revisions.slice().reverse().slice(0, tender.revisions.length - 1);
@@ -443,7 +443,7 @@ function emit_deleted_lotValues(tender, actual_bids, results) {
                     var id = old_lot.id;
                     (tender_copy.bids || []).forEach(function (old_bid) {
                         if (check_bid(actual_bids, old_bid)) {
-                            old_bid.lotValues.forEach(function (lotValue) {
+                            (old_bid.lotValues || []).forEach(function (lotValue) {
                                 if (lotValue.relatedLot === old_lot.id) {
                                     if (get_info_about_cancelled_lot(tender, tender_copy, old_bid, old_lot)) {
                                         var actual_lot = find_actual_lot(tender, old_lot.id)[0];
