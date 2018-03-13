@@ -333,7 +333,7 @@ function check_qualification_for_EU_bid(tender, bid, lot) {
             var revs = tender.revisions.slice().reverse().slice(0, tender.revisions.length - 1);
             var tender_copy = JSON.parse(JSON.stringify(tender));
             for (var i = 0; i < revs.length; i ++) {
-                tender_copy = jsp.apply(tender_copy, revs[i].changes);
+                tender_copy = jsp.apply_patch(tender_copy, revs[i].changes);
                 var found = tender_copy.lots.filter(function(l) {
                     return ((l.status !== 'cancelled') && (l.id === lot.id));
                 });
@@ -349,7 +349,7 @@ function check_qualification_for_EU_bid(tender, bid, lot) {
         } else {
             var revs = tender.revisions.slice().reverse().slice(0, tender.revisions.length - 1)
             var tender_copy = JSON.parse(JSON.stringify(tender));
-            var prev = jsp.apply(tender_copy, revs[0].changes);
+            var prev = jsp.apply_patch(tender_copy, revs[0].changes);
             if (prev.status == 'active.pre-qualification') {
                 prev.qualifications.forEach(function(qual) {
                     if (qual.status !== 'cancelled') {
@@ -432,7 +432,7 @@ function emit_deleted_lotValues(tender, actual_bids, results) {
         for (var i = 0; i < revs.length; i++) {
             if (cancelled_lots_ids.length === 0) { return; }
             try {
-                tender_copy = jsp.apply(tender_copy, revs[i].changes);
+                tender_copy = jsp.apply_patch(tender_copy, revs[i].changes);
             }
             catch (e) {
                 log(e)
