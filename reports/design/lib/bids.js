@@ -295,6 +295,7 @@ function check_qualification_for_bid(tender, bid, lot) {
 }
 
 function get_month(date) {
+    date = date.split("T")[0]
     return (new Date(date)).getMonth();
 }
 
